@@ -83,6 +83,6 @@ def app_client(temp_db: str, monkeypatch) -> Iterator[TestClient]:  # type: igno
     SQLModel.metadata.create_all(eng)
 
     application = _create_app()
-    with TestClient(application) as client:
+    with TestClient(application, follow_redirects=False) as client:
         yield client
     eng.dispose()
