@@ -310,6 +310,41 @@ def _commit_donated(
     current,
     rid: int,
 ) -> RedirectResponse:
+    # Idempotency / race guard (H3): a second coordinator clicking
+    # "donated" on the same request — or a double-click — must not
+    # re-overwrite last_donation_date, add a second "donated" audit row,
+    # or re-close the request. The check is done inside the same
+    # transaction so it is safe under concurrent submissions.
+    if req.status not in (
+        RequestStatus.VERIFIED.value,
+        RequestStatus.PENDING.value,
+    ):
+        flash(
+            request,
+            "error",
+            f"Request is already {req.status}; donation not recorded again.",
+        )
+        return RedirectResponse(
+            url=f"/coordinator/requests/{rid}", status_code=303
+        )
+    if attempt.outcome == ContactOutcome.DONATED.value:
+        flash(request, "error", "This attempt is already recorded as donated.")
+        return RedirectResponse(
+            url=f"/coordinator/requests/{rid}", status_code=303
+        )
+    if attempt.outcome == ContactOutcome.DECLINED.value:
+        # F8.6: a donor who declined should not silently be flipped to
+        # donated. Refuse and require the coordinator to add a fresh
+        # contact attempt instead.
+        flash(
+            request,
+            "error",
+            "Cannot mark a declined attempt as donated. "
+            "Use the 'other donor' flow to record a new attempt.",
+        )
+        return RedirectResponse(
+            url=f"/coordinator/matching/{rid}", status_code=303
+        )
     donor.last_donation_date = donation_date
     donor.updated_at = datetime.now(UTC)
     attempt.outcome = ContactOutcome.DONATED.value

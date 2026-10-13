@@ -464,3 +464,110 @@ def test_recent_attempt_shows_recently_flag(logged_in, engine, areas):
     assert r.status_code == 200
     # The page marks the recent column with a check
     assert ">✓<" in r.text
+
+
+def test_mark_donated_idempotent_no_double_close(logged_in, engine, areas):
+    """A second mark-donated call after the request is already FULFILLED
+    must not re-close it, re-set last_donation_date, or add a second
+    'donated' audit row.
+    """
+    donor = _make_donor(
+        engine, name="I", phone="01712345639", area_id=areas["dhanmondi"]
+    )
+    req = _make_request(engine, area_id=areas["dhanmondi"], blood_group="A+")
+    csrf = _page_csrf(logged_in, f"/coordinator/matching/{req.id}")
+    today = date.today().isoformat()
+
+    # First call: marks the request FULFILLED.
+    r1 = logged_in.post(
+        f"/coordinator/matching/{req.id}/donated",
+        data={
+            "csrf_token": csrf,
+            "donor_id": str(donor.id),
+            "donation_date": today,
+            "note": "",
+        },
+        follow_redirects=False,
+    )
+    assert r1.status_code == 303
+    with Session(engine) as session:
+        d_after = session.get(Donor, donor.id)
+        first_date = d_after.last_donation_date
+        first_attempt_count = len(
+            list(
+                session.exec(
+                    select(ContactAttempt).where(ContactAttempt.request_id == req.id)
+                ).all()
+            )
+        )
+    assert first_attempt_count == 1
+
+    # Second call on a different donor: must be rejected, must NOT add a
+    # second attempt, must NOT re-set last_donation_date.
+    donor2 = _make_donor(
+        engine, name="J", phone="01712345640", area_id=areas["dhanmondi"]
+    )
+    csrf2 = _page_csrf(logged_in, f"/coordinator/requests/{req.id}")
+    r2 = logged_in.post(
+        f"/coordinator/matching/{req.id}/donated",
+        data={
+            "csrf_token": csrf2,
+            "donor_id": str(donor2.id),
+            "donation_date": today,
+            "note": "",
+        },
+        follow_redirects=False,
+    )
+    assert r2.status_code == 303
+    with Session(engine) as session:
+        d2 = session.get(Donor, donor.id)  # original donor
+        attempts2 = list(
+            session.exec(
+                select(ContactAttempt).where(ContactAttempt.request_id == req.id)
+            ).all()
+        )
+    # No new attempt was created.
+    assert len(attempts2) == 1
+    # last_donation_date on the original donor is unchanged.
+    assert d2.last_donation_date == first_date
+
+
+def test_mark_donated_refuses_declined_attempt(logged_in, engine, areas):
+    """A donor who declined via Telegram must not be silently flipped to
+    'donated' (F8.6 — idempotency for the donor's own response).
+    """
+    donor = _make_donor(
+        engine, name="K", phone="01712345641", area_id=areas["dhanmondi"]
+    )
+    req = _make_request(engine, area_id=areas["dhanmondi"], blood_group="A+")
+    with Session(engine) as session:
+        coord = session.exec(select(Coordinator).where(Coordinator.username == "coord1")).first()
+        declined = ContactAttempt(
+            donor_id=donor.id,
+            request_id=req.id,
+            coordinator_id=coord.id,
+            outcome="declined",
+        )
+        session.add(declined)
+        session.commit()
+        session.refresh(declined)
+        declined_id = declined.id
+
+    csrf = _page_csrf(logged_in, f"/coordinator/matching/{req.id}")
+    logged_in.post(
+        f"/coordinator/matching/{req.id}/contact/{declined_id}/donated",
+        data={
+            "csrf_token": csrf,
+            "donation_date": date.today().isoformat(),
+            "note": "",
+        },
+        follow_redirects=False,
+    )
+    # The route must reject the request (303 to a flash error page) and
+    # leave the underlying state untouched: the declined attempt is
+    # still declined and the request is not fulfilled.
+    with Session(engine) as session:
+        a = session.get(ContactAttempt, declined_id)
+        r2 = session.get(BloodRequest, req.id)
+    assert a.outcome == "declined"
+    assert r2.status != RequestStatus.FULFILLED.value

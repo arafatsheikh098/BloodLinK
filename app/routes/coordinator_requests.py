@@ -148,7 +148,11 @@ def request_detail(
             "lang": render_lang_from_request(request),
             "csrf_token": get_or_create_csrf(request),
             "flashes": pop_flashes(request),
-            "request": req,
+            # Use `request_obj` not `request` — Starlette internally
+            # calls request.get(...) on the first arg, and a context key
+            # named `request` shadows it. This was previously dormant
+            # because no test loaded the detail page directly.
+            "request_obj": req,
             "area": area,
             "effective": effective_status(req.status, req.needed_by),
         },
