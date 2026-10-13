@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("coordinator.matching.title") }}</h1>
+
+{% for f in flashes %}
+  <div class="flash flash-{{ f.level }}">{{ f.message }}</div>
+{% endfor %}
+
+<p class="muted">
+  <strong>{{ request_obj.blood_group }}</strong> · {{ request_obj.units }} units ·
+  {{ area.name if area else request_obj.area_id }} ·
+  {{ t("request.tracking.needed_by") }}: {{ request_obj.needed_by.isoformat() }}
+</p>
+<p class="muted">{{ t("coordinator.matching.min_gap_help", days=settings.min_donation_gap_days) }}</p>
+
+{% if candidates %}
+<table>
+  <tr>
+    <th>#</th>
+    <th>{{ t("coordinator.matching.col.donor") }}</th>
+    <th>{{ t("coordinator.matching.col.blood") }}</th>
+    <th>{{ t("coordinator.matching.col.area") }}</th>
+    <th>{{ t("coordinator.matching.col.last_donation") }}</th>
+    <th>{{ t("coordinator.matching.col.exact") }}</th>
+    <th>{{ t("coordinator.matching.col.same_area") }}</th>
+    <th>{{ t("coordinator.matching.col.recent") }}</th>
+    <th>{{ t("coordinator.matching.col.reason") }}</th>
+    <th>{{ t("coordinator.matching.col.actions") }}</th>
+  </tr>
+  {% for c in candidates %}
+    {% set d = c.donor %}
+    <tr class="{% if c.ineligible %}ineligible{% endif %}">
+      <td>{{ loop.index }}</td>
+      <td>
+        <a href="/coordinator/donors/{{ d.id }}">{{ d.name }}</a><br>
+        <code>{{ mask_phone(d.phone_normalized) }}</code>
+      </td>
+      <td>{{ d.blood_group }}</td>
+      <td>
+        {% for a in areas %}
+          {% if a.id == d.area_id %}{{ a.name }}{% endif %}
+        {% endfor %}
+      </td>
+      <td>
+        {% if c.days_since_donation is none %}—
+        {% else %}{{ c.days_since_donation }}d
+        {% endif %}
+      </td>
+      <td>{% if c.exact_match %}✓{% else %}—{% endif %}</td>
+      <td>{% if c.same_area %}✓{% else %}—{% endif %}</td>
+      <td>{% if c.recently_contacted %}✓{% else %}—{% endif %}</td>
+      <td>
+        {% if c.ineligible %}
+          <span class="badge badge-warn">{{ c.ineligible }}</span>
+        {% else %}
+          <span class="badge badge-ok">{{ t("coordinator.matching.eligible") }}</span>
+        {% endif %}
+      </td>
+      <td>
+        {% if not c.ineligible %}
+          {% set prior = by_donor.get(d.id, []) %}
+          {% if prior %}
+            <details>
+              <summary>{{ t("coordinator.matching.history", n=prior|length) }}</summary>
+              <ul class="muted">
+                {% for a in prior %}
+                  <li>
+                    {{ a.created_at.isoformat() }} ·
+                    <code>{{ a.outcome }}</code>
+                    {% if a.note %}: {{ a.note }}{% endif %}
+                  </li>
+                {% endfor %}
+              </ul>
+            </details>
+          {% endif %}
+          <form method="post" action="/coordinator/matching/{{ request_obj.id }}/contact" class="inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="donor_id" value="{{ d.id }}">
+            <select name="outcome" required>
+              {% for o in outcomes %}
+                <option value="{{ o }}">{{ t("coordinator.matching.outcome." ~ o) }}</option>
+              {% endfor %}
+            </select>
+            <input type="text" name="note" maxlength="500" placeholder="{{ t('coordinator.matching.note_placeholder') }}">
+            <button class="button button-secondary" type="submit">{{ t("coordinator.matching.record") }}</button>
+          </form>
+          {% if prior %}
+            <form method="post" action="/coordinator/matching/{{ request_obj.id }}/contact/{{ prior[0].id }}/donated" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <input type="date" name="donation_date" max="{{ today_iso }}">
+              <button class="button" type="submit">{{ t("coordinator.matching.mark_donated") }}</button>
+            </form>
+          {% else %}
+            <form method="post" action="/coordinator/matching/{{ request_obj.id }}/donated" class="inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+              <input type="hidden" name="donor_id" value="{{ d.id }}">
+              <input type="date" name="donation_date" max="{{ today_iso }}">
+              <button class="button" type="submit">{{ t("coordinator.matching.mark_donated") }}</button>
+            </form>
+          {% endif %}
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% else %}
+  <p class="muted">{{ t("coordinator.matching.empty") }}</p>
+{% endif %}
+
+<p><a href="/coordinator/requests/{{ request_obj.id }}">← {{ t("coordinator.requests.detail_title") }}</a></p>
+{% endblock %}
