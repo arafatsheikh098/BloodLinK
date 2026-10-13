@@ -31,29 +31,41 @@
 </table>
 
 {% if effective in ["pending", "verified"] %}
-  <h3>{{ t("coordinator.requests.verify") }}</h3>
-  <form method="post" action="/coordinator/requests/{{ request_obj.id }}/verify">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <p><button class="button" type="submit">{{ t("coordinator.requests.verify") }}</button></p>
-  </form>
+  <div class="card">
+    <h3>{{ t("coordinator.requests.verify") }}</h3>
+    <form method="post" action="/coordinator/requests/{{ request_obj.id }}/verify">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="button-row">
+        <button class="button" type="submit">{{ t("coordinator.requests.verify") }}</button>
+      </div>
+    </form>
+  </div>
 {% endif %}
 
 {% if effective not in ["fulfilled", "cancelled", "rejected", "expired"] %}
-  <h3>{{ t("coordinator.requests.reject") }}</h3>
-  <form method="post" action="/coordinator/requests/{{ request_obj.id }}/reject">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <label for="reason">{{ t("coordinator.requests.reject_reason_label") }}</label>
-    <textarea id="reason" name="reason" required maxlength="500"></textarea>
-    <p><button class="button button-secondary" type="submit">{{ t("coordinator.requests.reject") }}</button></p>
-  </form>
+  <div class="card">
+    <h3>{{ t("coordinator.requests.reject") }}</h3>
+    <form method="post" action="/coordinator/requests/{{ request_obj.id }}/reject">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <label for="reason">{{ t("coordinator.requests.reject_reason_label") }}</label>
+      <textarea id="reason" name="reason" required maxlength="500"></textarea>
+      <div class="button-row">
+        <button class="button button-secondary" type="submit">{{ t("coordinator.requests.reject") }}</button>
+      </div>
+    </form>
+  </div>
 {% endif %}
 
 {% if effective in ["pending", "verified"] %}
-  <h3>{{ t("coordinator.requests.fulfill") }}</h3>
-  <form method="post" action="/coordinator/requests/{{ request_obj.id }}/fulfill">
-    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
-    <p><button class="button button-secondary" type="submit">{{ t("coordinator.requests.fulfill") }}</button></p>
-  </form>
+  <div class="card">
+    <h3>{{ t("coordinator.requests.fulfill") }}</h3>
+    <form method="post" action="/coordinator/requests/{{ request_obj.id }}/fulfill">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <div class="button-row">
+        <button class="button button-secondary" type="submit">{{ t("coordinator.requests.fulfill") }}</button>
+      </div>
+    </form>
+  </div>
 {% endif %}
 
 {% if effective == "verified" %}
