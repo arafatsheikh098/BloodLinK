@@ -1,12 +1,12 @@
 """Telegram routes (F8.1, F8.2, F8.4).
 
   POST /telegram/webhook         — receive updates (header-secret check)
-  POST /telegram/start           — recipient of /start command; expects ?code=
-  GET  /telegram/connect/{code}  — donor manage-page entrypoint
+  GET  /telegram/connect/{code}  — donor manage-page entrypoint (no-op)
 
 The webhook URL must be set via the BotFather API after deploy. Telegram
 sends an X-Telegram-Bot-Api-Secret-Token header that we compare in constant
-time to TELEGRAM_WEBHOOK_SECRET.
+time to TELEGRAM_WEBHOOK_SECRET. The /start command from a donor is
+received via the webhook and processed by _link_chat_to_donor below.
 """
 from __future__ import annotations
 

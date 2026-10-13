@@ -248,6 +248,13 @@ def request_fulfill(
     req.status = RequestStatus.FULFILLED.value
     req.closed_at = datetime.now(UTC)
     req.updated_at = datetime.now(UTC)
+    # If the request was PENDING (skipped the explicit verify step),
+    # we still need to record who closed it as the verifier. Otherwise
+    # downstream reports that filter "verified by" would silently miss
+    # these requests.
+    if req.verified_by_id is None:
+        req.verified_by_id = current.id
+        req.verified_at = datetime.now(UTC)
     write_audit(
         session,
         AuditAction.REQUEST_FULFILL,
