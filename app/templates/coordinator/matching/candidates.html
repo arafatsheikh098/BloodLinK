@@ -13,6 +13,16 @@
 </p>
 <p class="muted">{{ t("coordinator.matching.min_gap_help", days=settings.min_donation_gap_days) }}</p>
 
+{% if settings.telegram_enabled %}
+<form method="post" action="/coordinator/requests/{{ request_obj.id }}/notify" class="notify-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label for="donor-ids">{{ t("coordinator.matching.notify_label") }}</label>
+  <input id="donor-ids" name="donor_ids" type="text" placeholder="1,2,3" required>
+  <p class="muted">{{ t("coordinator.matching.notify_help") }}</p>
+  <p><button class="button" type="submit">{{ t("coordinator.matching.notify_button") }}</button></p>
+</form>
+{% endif %}
+
 {% if candidates %}
 <table>
   <tr>

@@ -189,5 +189,14 @@
   "coordinator.matching.outcome.accepted": "Accepted",
   "coordinator.matching.outcome.declined": "Declined",
   "coordinator.matching.outcome.no_answer": "No answer",
-  "coordinator.matching.outcome.donated": "Donated"
+  "coordinator.matching.outcome.donated": "Donated",
+  "donor.manage.telegram.title": "Telegram notifications (optional)",
+  "donor.manage.telegram.intro": "Open this link in Telegram to link your account. The code expires in 15 minutes and can be used only once.",
+  "donor.manage.telegram.code_label": "Your one-time code:",
+  "donor.manage.telegram.open_button": "Open in Telegram",
+  "donor.manage.telegram.no_bot": "Telegram is not configured for this deployment.",
+  "donor.manage.telegram.linked": "Your Telegram account is linked.",
+  "coordinator.matching.notify_button": "Notify selected via Telegram",
+  "coordinator.matching.notify_label": "Donor IDs (comma-separated)",
+  "coordinator.matching.notify_help": "Sends a Telegram message with Accept/Decline buttons to each selected donor. Donor must have linked Telegram."
 }

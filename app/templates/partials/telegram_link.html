@@ -1,0 +1,12 @@
+{% if telegram_enabled %}
+  <h3>{{ t("donor.manage.telegram.title") }}</h3>
+  {% if telegram_linked %}
+    <p class="muted">{{ t("donor.manage.telegram.linked") }}</p>
+  {% elif telegram_bot_start_url %}
+    <p>{{ t("donor.manage.telegram.intro") }}</p>
+    <p><a class="button" href="{{ telegram_bot_start_url }}">{{ t("donor.manage.telegram.open_button") }}</a></p>
+    <p class="muted">{{ t("donor.manage.telegram.code_label") }} <code>{{ telegram_pending_code }}</code></p>
+  {% else %}
+    <p class="muted">{{ t("donor.manage.telegram.no_bot") }}</p>
+  {% endif %}
+{% endif %}

@@ -1,7 +1,7 @@
 """Public donor registration form + donor self-service via manage link (F2, F3)."""
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
@@ -9,12 +9,14 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlmodel import Session, select
 
 from app.audit import write_audit
+from app.config import get_settings
 from app.csrf import CsrfDep, get_or_create_csrf
 from app.db import get_session
 from app.deps import pop_flashes
 from app.models.area import Area
 from app.models.audit_log import AuditAction
 from app.models.donor import BLOOD_GROUPS, Donor, DonorStatus
+from app.models.telegram_link import TelegramLink
 from app.phone import (
     PhoneNormalizationError,
     mask_phone,
@@ -196,6 +198,44 @@ def manage_form(
         # No info leak: 404 with no detail.
         raise HTTPException(status_code=404, detail="not found")
     areas = _active_areas(session)
+    telegram_link = session.exec(
+        select(TelegramLink).where(TelegramLink.donor_id == donor.id)
+    ).first()
+    bot_username = None
+    pending_code = None
+    bot_start_url = None
+    if get_settings().telegram_enabled:
+        from app.routes.telegram import _new_link_code
+
+        bot_username = _bot_username()
+        if telegram_link and telegram_link.chat_id:
+            # Already linked
+            pending_code = None
+        else:
+            # Issue a fresh pending code (or reuse the live one)
+            if (
+                telegram_link
+                and telegram_link.pending_code_hash
+                and telegram_link.pending_code_expires_at
+                and telegram_link.pending_code_expires_at.replace(tzinfo=None)
+                > datetime.now(UTC).replace(tzinfo=None)
+            ):
+                # We cannot show the plaintext old code (we only have its hash)
+                # so generate a fresh one.
+                pass
+            if telegram_link is None:
+                telegram_link = TelegramLink(donor_id=donor.id)
+                session.add(telegram_link)
+            plain_code = _new_link_code()
+            telegram_link.pending_code_hash = hash_token(plain_code)
+            telegram_link.pending_code_expires_at = (
+                datetime.now(UTC) + timedelta(minutes=15)
+            )
+            telegram_link.updated_at = datetime.now(UTC)
+            session.commit()
+            pending_code = plain_code
+            if bot_username:
+                bot_start_url = f"https://t.me/{bot_username}?start={plain_code}"
     return templates.TemplateResponse(
         request,
         "donor/manage.html",
@@ -209,8 +249,27 @@ def manage_form(
             "flashes": pop_flashes(request),
             "errors": {},
             "blood_groups": BLOOD_GROUPS,
+            "telegram_enabled": get_settings().telegram_enabled,
+            "telegram_linked": bool(telegram_link and telegram_link.chat_id),
+            "telegram_pending_code": pending_code,
+            "telegram_bot_username": bot_username,
+            "telegram_bot_start_url": bot_start_url,
         },
     )
+
+
+def _bot_username() -> str | None:
+    from app.config import get_settings
+
+    base = get_settings().telegram_public_base_url
+    if not base:
+        return None
+    base = base.strip().rstrip("/")
+    if base.startswith("https://t.me/"):
+        return base.removeprefix("https://t.me/")
+    if base.startswith("http://t.me/"):
+        return base.removeprefix("http://t.me/")
+    return None
 
 
 @router.post("/donor/manage/{token}", dependencies=[CsrfDep])

@@ -69,12 +69,14 @@ def _register_routes(app: FastAPI) -> None:
         auth,
         coordinator_donors,
         coordinator_matching,
+        coordinator_notify,
         coordinator_requests,
         donor_public,
         health,
         home,
         lang,
         request_public,
+        telegram,
     )
 
     app.include_router(health.router)
@@ -87,6 +89,8 @@ def _register_routes(app: FastAPI) -> None:
     app.include_router(request_public.router)
     app.include_router(coordinator_requests.router)
     app.include_router(coordinator_matching.router)
+    app.include_router(telegram.router)
+    app.include_router(coordinator_notify.router)
 
 
 def _register_error_handlers(app: FastAPI) -> None:

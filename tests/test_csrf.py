@@ -19,6 +19,7 @@ from fastapi.routing import APIRoute
 # entries will be flagged as failures below.
 CSRF_EXEMPT_PATHS = {
     ("/login", "POST"),  # login form has its own CSRF
+    ("/telegram/webhook", "POST"),  # telegram authenticates via X-Telegram-Bot-Api-Secret-Token
 }
 
 

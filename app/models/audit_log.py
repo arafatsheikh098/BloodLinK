@@ -26,6 +26,14 @@ class AuditAction(str, Enum):
     REQUEST_CANCEL = "request_cancel"
     # Matching / contact
     CONTACT_ATTEMPT = "contact_attempt"
+    # Telegram
+    TELEGRAM_LINK_REQUEST = "telegram_link_request"
+    TELEGRAM_LINK_COMPLETE = "telegram_link_complete"
+    TELEGRAM_NOTIFY_SENT = "telegram_notify_sent"
+    TELEGRAM_NOTIFY_FAILED = "telegram_notify_failed"
+    TELEGRAM_CALLBACK_ACCEPT = "telegram_callback_accept"
+    TELEGRAM_CALLBACK_DECLINE = "telegram_callback_decline"
+    TELEGRAM_CALLBACK_REJECTED = "telegram_callback_rejected"
     # Areas
     AREA_CREATE = "area_create"
     AREA_RENAME = "area_rename"
