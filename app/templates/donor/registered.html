@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("donor.registered.title") }}</h1>
+<p>{{ t("donor.registered.body") }}</p>
+<p class="muted">{{ t("donor.registered.notice") }}</p>
+
+<h2>{{ t("donor.registered.manage_link") }}</h2>
+<p>
+  <a class="button" href="{{ manage_link }}">{{ manage_link }}</a>
+</p>
+<p class="muted">{{ t("donor.registered.manage_warning") }}</p>
+
+<p class="muted">{{ t("donor.registered.phone_label") }}: {{ phone_masked }}</p>
+{% endblock %}

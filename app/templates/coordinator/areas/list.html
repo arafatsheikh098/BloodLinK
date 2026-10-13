@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Areas</h1>
+{% for f in flashes %}
+  <div class="flash flash-{{ f.level }}">{{ f.message }}</div>
+{% endfor %}
+<form method="post" action="/areas">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label for="area-name">New area</label>
+  <input id="area-name" name="name" type="text" required>
+  <p><button class="button" type="submit">Create area</button></p>
+</form>
+<table>
+  <tr><th>Name</th><th>Active</th><th></th></tr>
+  {% for a in areas %}
+    <tr>
+      <td>
+        <form method="post" action="/areas/{{ a.id }}/rename" style="display:inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <input name="name" type="text" value="{{ a.name }}" required>
+          <button class="button button-secondary" type="submit">Rename</button>
+        </form>
+      </td>
+      <td>{% if a.is_active %}yes{% else %}no{% endif %}</td>
+      <td>
+        {% if a.is_active %}
+          <form method="post" action="/areas/{{ a.id }}/deactivate" style="display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <button class="button button-secondary" type="submit">Deactivate</button>
+          </form>
+        {% endif %}
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}
