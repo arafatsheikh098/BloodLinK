@@ -17,5 +17,13 @@
   "errors.404.title": "Page not found",
   "errors.404.body": "The page you asked for does not exist.",
   "errors.500.title": "Something went wrong",
-  "errors.500.body": "Please try again later. If the problem persists, contact a coordinator."
+  "errors.500.body": "Please try again later. If the problem persists, contact a coordinator.",
+  "auth.login.title": "Coordinator login",
+  "auth.login.username": "Username",
+  "auth.login.password": "Password",
+  "auth.login.submit": "Log in",
+  "auth.login.error": "Invalid username or password.",
+  "auth.login.rate_limited": "Too many attempts. Please wait 15 minutes and try again.",
+  "auth.logout": "Log out",
+  "auth.not_logged_in": "You must log in to view that page."
 }

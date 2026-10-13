@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("auth.login.title") }}</h1>
+{% if rate_limited %}
+  <div class="flash flash-error">{{ t("auth.login.rate_limited") }}</div>
+{% elif error == "invalid" %}
+  <div class="flash flash-error">{{ t("auth.login.error") }}</div>
+{% endif %}
+<form method="post" action="/login">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label for="username">{{ t("auth.login.username") }}</label>
+  <input id="username" name="username" type="text" autocomplete="username" required>
+  <label for="password">{{ t("auth.login.password") }}</label>
+  <input id="password" name="password" type="password" autocomplete="current-password" required>
+  <p><button class="button" type="submit">{{ t("auth.login.submit") }}</button></p>
+</form>
+{% endblock %}
