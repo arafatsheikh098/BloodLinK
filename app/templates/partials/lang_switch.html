@@ -1,0 +1,9 @@
+<form class="lang-switch" method="post" action="/lang">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label for="lang-select" class="visually-hidden">{{ t("lang.switch") }}</label>
+  <select id="lang-select" name="lang" onchange="this.form.submit()">
+    <option value="en" {% if lang == "en" %}selected{% endif %}>{{ t("lang.en") }}</option>
+    <option value="bn" {% if lang == "bn" %}selected{% endif %}>{{ t("lang.bn") }}</option>
+  </select>
+  <noscript><button type="submit">{{ t("lang.switch") }}</button></noscript>
+</form>

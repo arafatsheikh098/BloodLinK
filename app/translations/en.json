@@ -1,0 +1,21 @@
+{
+  "app.name": "BloodLink",
+  "app.tagline": "A privacy-first donor coordination tool for our club.",
+  "nav.home": "Home",
+  "nav.donor_register": "Register as a donor",
+  "nav.request": "Request blood",
+  "nav.privacy": "Privacy",
+  "nav.stats": "Donor counts",
+  "nav.login": "Coordinator login",
+  "nav.logout": "Log out",
+  "lang.switch": "Language",
+  "lang.en": "English",
+  "lang.bn": "বাংলা",
+  "health.title": "Service status",
+  "health.ok": "OK",
+  "footer.notice": "Hospitals and blood banks decide final blood safety. This tool only helps the club coordinate willing donors.",
+  "errors.404.title": "Page not found",
+  "errors.404.body": "The page you asked for does not exist.",
+  "errors.500.title": "Something went wrong",
+  "errors.500.body": "Please try again later. If the problem persists, contact a coordinator."
+}

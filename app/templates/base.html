@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="{{ lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ t("app.name") }}</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="/">{{ t("app.name") }}</a>
+      <nav class="site-nav">
+        <a href="/">{{ t("nav.home") }}</a>
+        <a href="/donor/register">{{ t("nav.donor_register") }}</a>
+        <a href="/request/new">{{ t("nav.request") }}</a>
+        <a href="/stats">{{ t("nav.stats") }}</a>
+        <a href="/privacy">{{ t("nav.privacy") }}</a>
+        <a href="/login">{{ t("nav.login") }}</a>
+      </nav>
+      {% include "partials/lang_switch.html" %}
+    </div>
+    {% if demo_mode %}
+      <div class="banner banner-demo" role="status">
+        <strong>DEMO MODE</strong> — fake data only; no real donors.
+      </div>
+    {% endif %}
+  </header>
+  <main class="container">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <p>{{ t("footer.notice") }}</p>
+  </footer>
+</body>
+</html>

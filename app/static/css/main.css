@@ -1,0 +1,64 @@
+/* BloodLink — minimal, mobile-first baseline.
+ * No external CDNs; no remote fonts; no inline scripts. */
+:root {
+  --c-bg: #ffffff;
+  --c-fg: #1a1a1a;
+  --c-muted: #5c5c5c;
+  --c-accent: #b71c1c;
+  --c-border: #d0d0d0;
+  --c-banner-bg: #fff4e5;
+  --c-banner-fg: #5a3a00;
+  --c-link: #0b5fff;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  background: var(--c-bg);
+  color: var(--c-fg);
+  line-height: 1.5;
+}
+
+.container {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+.site-header { border-bottom: 1px solid var(--c-border); padding: 0.75rem 0; }
+.site-header .container { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
+.brand { font-weight: 700; color: var(--c-accent); text-decoration: none; }
+.site-nav { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; flex: 1 1 auto; }
+.site-nav a { color: var(--c-link); text-decoration: none; }
+.site-nav a:hover { text-decoration: underline; }
+.lang-switch select { padding: 0.25rem 0.5rem; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+main.container { padding: 1.25rem 1rem 2rem; }
+
+.site-footer { border-top: 1px solid var(--c-border); margin-top: 2rem; padding: 1rem 0; color: var(--c-muted); font-size: 0.9rem; }
+
+.banner { padding: 0.5rem 1rem; text-align: center; }
+.banner-demo { background: var(--c-banner-bg); color: var(--c-banner-fg); }
+
+h1 { font-size: 1.5rem; margin-top: 0.5rem; }
+h2 { font-size: 1.2rem; }
+.muted { color: var(--c-muted); }
+.button { display: inline-block; padding: 0.5rem 1rem; background: var(--c-accent); color: #fff; border: 0; border-radius: 4px; text-decoration: none; cursor: pointer; }
+.button-secondary { background: #fff; color: var(--c-fg); border: 1px solid var(--c-border); }
+
+form label { display: block; margin: 0.5rem 0 0.25rem; }
+form input[type=text], form input[type=tel], form input[type=email], form input[type=password], form input[type=date], form input[type=datetime-local], form input[type=number], form select, form textarea { width: 100%; padding: 0.5rem; border: 1px solid var(--c-border); border-radius: 4px; background: #fff; color: var(--c-fg); }
+form textarea { min-height: 5rem; }
+form .help { font-size: 0.85rem; color: var(--c-muted); }
+form .error { color: var(--c-accent); font-size: 0.9rem; }
+
+.flash { padding: 0.5rem 0.75rem; margin: 0.5rem 0; border-radius: 4px; }
+.flash-error { background: #fdecea; color: #5a1212; }
+.flash-success { background: #e8f5e9; color: #1b3a1b; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 0.4rem 0.5rem; border-bottom: 1px solid var(--c-border); text-align: left; }
