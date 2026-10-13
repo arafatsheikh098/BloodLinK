@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("coordinator.requests.detail_title") }}</h1>
+
+{% for f in flashes %}
+  <div class="flash flash-{{ f.level }}">{{ f.message }}</div>
+{% endfor %}
+
+<p class="muted">
+  <strong>{{ request.blood_group }}</strong> · {{ request.units }} units ·
+  {{ t("request.status." ~ effective) }}
+</p>
+
+<table>
+  <tr><th>{{ t("request.tracking.hospital") }}</th><td>{{ request.hospital_name }}</td></tr>
+  <tr><th>{{ t("request.tracking.area") }}</th><td>{{ area.name if area else request.area_id }}</td></tr>
+  <tr><th>{{ t("request.tracking.needed_by") }}</th><td>{{ request.needed_by.isoformat() }}</td></tr>
+  <tr><th>{{ t("coordinator.requests.col.requester") }}</th><td>{{ request.requester_name }} · {{ request.requester_phone_normalized }}</td></tr>
+  {% if request.note %}
+    <tr><th>Note</th><td>{{ request.note }}</td></tr>
+  {% endif %}
+  {% if request.reject_reason %}
+    <tr><th>Reject reason</th><td>{{ request.reject_reason }}</td></tr>
+  {% endif %}
+  <tr>
+    <th>{{ t("request.tracking.status") }}</th>
+    <td>
+      <code>{{ request.public_token }}</code>
+    </td>
+  </tr>
+</table>
+
+{% if effective in ["pending", "verified"] %}
+  <h3>{{ t("coordinator.requests.verify") }}</h3>
+  <form method="post" action="/coordinator/requests/{{ request.id }}/verify">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <p><button class="button" type="submit">{{ t("coordinator.requests.verify") }}</button></p>
+  </form>
+{% endif %}
+
+{% if effective not in ["fulfilled", "cancelled", "rejected", "expired"] %}
+  <h3>{{ t("coordinator.requests.reject") }}</h3>
+  <form method="post" action="/coordinator/requests/{{ request.id }}/reject">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="reason">{{ t("coordinator.requests.reject_reason_label") }}</label>
+    <textarea id="reason" name="reason" required maxlength="500"></textarea>
+    <p><button class="button button-secondary" type="submit">{{ t("coordinator.requests.reject") }}</button></p>
+  </form>
+{% endif %}
+
+{% if effective in ["pending", "verified"] %}
+  <h3>{{ t("coordinator.requests.fulfill") }}</h3>
+  <form method="post" action="/coordinator/requests/{{ request.id }}/fulfill">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <p><button class="button button-secondary" type="submit">{{ t("coordinator.requests.fulfill") }}</button></p>
+  </form>
+{% endif %}
+
+{% if effective == "verified" %}
+  <p><a class="button" href="/coordinator/matching/{{ request.id }}">{{ t("coordinator.requests.candidates") }}</a></p>
+{% endif %}
+
+<p><a href="/coordinator/requests">← {{ t("coordinator.requests.list_title") }}</a></p>
+{% endblock %}

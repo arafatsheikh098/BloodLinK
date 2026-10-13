@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("coordinator.requests.list_title") }}</h1>
+
+{% for f in flashes %}
+  <div class="flash flash-{{ f.level }}">{{ f.message }}</div>
+{% endfor %}
+
+<form method="get" action="/coordinator/requests" class="filters">
+  <p>
+    <label for="q">{{ t("coordinator.requests.search") }}</label>
+    <input id="q" name="q" type="text" value="{{ filters.q }}">
+  </p>
+  <p>
+    <label for="blood_group">{{ t("coordinator.requests.filter.blood_group") }}</label>
+    <select id="blood_group" name="blood_group">
+      <option value="">{{ t("coordinator.donors.filter.any") }}</option>
+      {% for g in blood_groups %}
+        <option value="{{ g }}" {% if filters.blood_group==g %}selected{% endif %}>{{ g }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="area_id">{{ t("coordinator.requests.filter.area") }}</label>
+    <select id="area_id" name="area_id">
+      <option value="">{{ t("coordinator.donors.filter.any") }}</option>
+      {% for a in areas %}
+        <option value="{{ a.id }}" {% if filters.area_id==a.id|string %}selected{% endif %}>{{ a.name }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="status">{{ t("coordinator.requests.filter.status") }}</label>
+    <select id="status" name="status">
+      <option value="">{{ t("coordinator.donors.filter.any") }}</option>
+      {% for s in statuses %}
+        <option value="{{ s }}" {% if filters.status==s %}selected{% endif %}>{{ t("request.status." ~ s) }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p><button class="button" type="submit">{{ t("coordinator.requests.filter.apply") }}</button></p>
+</form>
+
+<p class="muted">{{ total }} total — page {{ page }} / {{ total_pages }}</p>
+
+{% if requests %}
+<table>
+  <tr>
+    <th>{{ t("coordinator.requests.col.blood") }}</th>
+    <th>{{ t("coordinator.requests.col.units") }}</th>
+    <th>{{ t("coordinator.requests.col.hospital") }}</th>
+    <th>{{ t("coordinator.requests.col.area") }}</th>
+    <th>{{ t("coordinator.requests.col.needed_by") }}</th>
+    <th>{{ t("coordinator.requests.col.status") }}</th>
+    <th>{{ t("coordinator.requests.col.actions") }}</th>
+  </tr>
+  {% for r in requests %}
+    <tr>
+      <td>{{ r.blood_group }}</td>
+      <td>{{ r.units }}</td>
+      <td>{{ r.hospital_name }}</td>
+      <td>
+        {% for a in areas %}
+          {% if a.id == r.area_id %}{{ a.name }}{% endif %}
+        {% endfor %}
+      </td>
+      <td>{{ r.needed_by.isoformat() }}</td>
+      <td>{{ t("request.status." ~ effective_status(r.status, r.needed_by)) }}</td>
+      <td><a href="/coordinator/requests/{{ r.id }}">{{ t("coordinator.requests.view") }}</a></td>
+    </tr>
+  {% endfor %}
+</table>
+{% if total_pages > 1 %}
+<nav class="pagination">
+  {% if page > 1 %}
+    <a class="button" href="?{% for k, v in filters.items() %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page - 1 }}">←</a>
+  {% endif %}
+  {% if page < total_pages %}
+    <a class="button" href="?{% for k, v in filters.items() %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page + 1 }}">→</a>
+  {% endif %}
+</nav>
+{% endif %}
+{% else %}
+  <p class="muted">No requests match.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("request.created.title") }}</h1>
+<p>{{ t("request.created.body") }}</p>
+<p class="muted">{{ t("request.created.notice") }}</p>
+
+<h2>{{ t("request.created.manage_link") }}</h2>
+<p>
+  <a class="button" href="{{ tracking_link }}">{{ tracking_link }}</a>
+</p>
+<p class="muted">{{ t("request.created.warning") }}</p>
+{% endblock %}

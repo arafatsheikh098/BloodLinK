@@ -10,6 +10,7 @@ from app.models.coordinator import Coordinator
 from app.models.donor import Donor, DonorStatus
 from app.models.login_attempt import LoginAttempt
 from app.models.request import BloodRequest, RequestStatus
+from app.models.request_attempt import RequestAttempt
 from app.models.telegram_link import TelegramLink
 
 __all__ = [
@@ -21,6 +22,7 @@ __all__ = [
     "Donor",
     "DonorStatus",
     "LoginAttempt",
+    "RequestAttempt",
     "RequestStatus",
     "TelegramLink",
 ]

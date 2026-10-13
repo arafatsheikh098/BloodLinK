@@ -32,6 +32,7 @@ def test_upgrade_creates_all_tables(alembic_cfg, tmp_path):
         "contact_attempts",
         "audit_log",
         "login_attempts",
+        "request_attempts",
         "telegram_links",
     }
     assert expected.issubset(names), f"missing tables: {expected - names}"

@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("request.new.title") }}</h1>
+<p class="muted">{{ t("request.new.intro") }}</p>
+
+{% if errors._global == "ip_rate_limited" %}
+  <div class="flash flash-error">{{ t("request.new.ip_rate_limited") }}</div>
+{% endif %}
+{% if errors.requester_phone == "phone_too_many" %}
+  <div class="flash flash-error">{{ t("request.new.phone_too_many") }}</div>
+{% endif %}
+
+<form method="post" action="/request/new">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+  {# Honeypot field (F5.2) — must be hidden from sighted users and ATs #}
+  <div style="position:absolute;left:-10000px;top:auto;width:1px;height:1px;overflow:hidden;" aria-hidden="true">
+    <label for="website">{{ t("request.new.honeypot") }}</label>
+    <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+  </div>
+
+  <label for="blood_group">{{ t("request.new.blood_group") }}</label>
+  <select id="blood_group" name="blood_group" required>
+    <option value="">--</option>
+    {% for g in blood_groups %}
+      <option value="{{ g }}" {% if values.get('blood_group')==g %}selected{% endif %}>{{ g }}</option>
+    {% endfor %}
+  </select>
+  {% if errors.blood_group %}<div class="error">{{ errors.blood_group }}</div>{% endif %}
+
+  <label for="units">{{ t("request.new.units") }}</label>
+  <input id="units" name="units" type="number" min="1" max="10" required value="{{ values.get('units','') }}">
+  <p class="help">{{ t("request.new.units_help") }}</p>
+  {% if errors.units %}<div class="error">{{ errors.units }}</div>{% endif %}
+
+  <label for="hospital_name">{{ t("request.new.hospital_name") }}</label>
+  <input id="hospital_name" name="hospital_name" type="text" maxlength="200" required value="{{ values.get('hospital_name','') }}">
+  {% if errors.hospital_name %}<div class="error">{{ errors.hospital_name }}</div>{% endif %}
+
+  <label for="area_id">{{ t("request.new.area") }}</label>
+  <select id="area_id" name="area_id" required>
+    <option value="">--</option>
+    {% for a in areas %}
+      <option value="{{ a.id }}" {% if values.get('area_id')==a.id|string %}selected{% endif %}>{{ a.name }}</option>
+    {% endfor %}
+  </select>
+  {% if errors.area_id %}<div class="error">{{ errors.area_id }}</div>{% endif %}
+
+  <label for="needed_by">{{ t("request.new.needed_by") }}</label>
+  <input id="needed_by" name="needed_by" type="datetime-local" required value="{{ values.get('needed_by','') }}">
+  <p class="help">{{ t("request.new.needed_by_help") }}</p>
+  {% if errors.needed_by %}<div class="error">{{ errors.needed_by }}</div>{% endif %}
+
+  <label for="requester_name">{{ t("request.new.requester_name") }}</label>
+  <input id="requester_name" name="requester_name" type="text" maxlength="120" required value="{{ values.get('requester_name','') }}">
+  {% if errors.requester_name %}<div class="error">{{ errors.requester_name }}</div>{% endif %}
+
+  <label for="requester_phone">{{ t("request.new.requester_phone") }}</label>
+  <input id="requester_phone" name="requester_phone" type="tel" inputmode="tel" required value="{{ values.get('requester_phone','') }}">
+  <p class="help">{{ t("request.new.requester_phone_help") }}</p>
+  {% if errors.requester_phone and errors.requester_phone != "phone_too_many" %}<div class="error">{{ errors.requester_phone }}</div>{% endif %}
+
+  <label for="note">{{ t("request.new.note") }}</label>
+  <textarea id="note" name="note" maxlength="200">{{ values.get('note','') }}</textarea>
+  <p class="help">{{ t("request.new.note_warning") }}</p>
+  {% if errors.note %}<div class="error">{{ errors.note }}</div>{% endif %}
+
+  <p>
+    <label><input type="checkbox" name="consent_contact" value="yes" required> {{ t("request.new.consent_contact") }}</label>
+    {% if errors.consent_contact %}<div class="error">{{ errors.consent_contact }}</div>{% endif %}
+  </p>
+
+  <p><button class="button" type="submit">{{ t("request.new.submit") }}</button></p>
+</form>
+{% endblock %}

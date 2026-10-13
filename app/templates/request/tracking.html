@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("request.tracking.title") }}</h1>
+
+{% if not_found %}
+  <p class="muted">{{ t("request.tracking.not_found") }}</p>
+{% else %}
+  {% for f in flashes %}
+    <div class="flash flash-{{ f.level }}">{{ f.message }}</div>
+  {% endfor %}
+
+  <table>
+    <tr><th>{{ t("request.tracking.blood_group") }}</th><td>{{ req.blood_group }}</td></tr>
+    <tr><th>{{ t("request.tracking.units") }}</th><td>{{ req.units }}</td></tr>
+    <tr><th>{{ t("request.tracking.hospital") }}</th><td>{{ req.hospital_name }}</td></tr>
+    <tr><th>{{ t("request.tracking.area") }}</th><td>{{ req.area_id }}</td></tr>
+    <tr><th>{{ t("request.tracking.needed_by") }}</th><td>{{ req.needed_by.isoformat() }}</td></tr>
+    <tr>
+      <th>{{ t("request.tracking.status") }}</th>
+      <td>
+        {{ t("request.status." ~ effective) }}
+        {% if req.reject_reason %}<br><small>{{ req.reject_reason }}</small>{% endif %}
+      </td>
+    </tr>
+  </table>
+
+  {% if effective in ["pending", "verified"] %}
+    <form method="post" action="/request/{{ req.public_token }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <p class="help">{{ t("request.tracking.cancel_confirm") }}</p>
+      <p><button class="button button-secondary" type="submit">{{ t("request.tracking.cancel") }}</button></p>
+    </form>
+  {% endif %}
+{% endif %}
+{% endblock %}
