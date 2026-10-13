@@ -8,7 +8,9 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from typing import Final
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
+from app.config import get_settings
 from app.models.donor import BLOOD_GROUPS
 from app.phone import PhoneNormalizationError, normalize_bd_mobile
 
@@ -90,8 +92,17 @@ def validate_request_form(
     except ValueError as exc:
         raise RequestValidationError("needed_by", "Please enter a valid date and time.") from exc
     if needed_by.tzinfo is None:
-        # Treat naive as local — we compare in UTC.
-        needed_by = needed_by.replace(tzinfo=UTC)
+        # Browsers submit <input type="datetime-local"> values WITHOUT a
+        # timezone; the user enters them in their local clock. The
+        # deployment's display timezone is configured in settings
+        # (DISPLAY_TIMEZONE, default Asia/Dhaka). Treat naive values as
+        # local-to-the-deployment, then convert to UTC for comparison
+        # and storage.
+        try:
+            local_tz = ZoneInfo(get_settings().display_timezone)
+        except ZoneInfoNotFoundError:
+            local_tz = UTC
+        needed_by = needed_by.replace(tzinfo=local_tz).astimezone(UTC)
     if needed_by <= now:
         raise RequestValidationError("needed_by", "Needed-by time must be in the future.")
     if needed_by > now + timedelta(days=NEEDED_BY_MAX_DAYS):

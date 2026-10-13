@@ -102,6 +102,40 @@ def test_more_than_14_days_rejected(app_client, area_id):
     assert r.status_code == 400
 
 
+def test_naive_needed_by_treated_as_local_time(app_client, area_id, engine):
+    """A naive datetime-local value is treated as DISPLAY_TIMEZONE-local,
+    not UTC. Regression: previously a Dhaka user entering 18:00 was
+    stored as 18:00 UTC (6 hours ahead of their wall clock).
+    """
+    from app.config import get_settings
+
+    # The deployment default is Asia/Dhaka (UTC+6).
+    assert get_settings().display_timezone == "Asia/Dhaka"
+    # 11h ahead of UTC "now" (a wall-clock 5h ahead of now in Dhaka).
+    # If we wrongly treat it as UTC, the stored value is local-as-UTC.
+    # If correctly treated as Dhaka-local, the stored UTC value is
+    # 6h earlier than the naive interpretation.
+    naive_local = (datetime.now(UTC) + timedelta(hours=11)).replace(
+        microsecond=0, tzinfo=None
+    ).isoformat()
+    r = _post_valid(app_client, area_id, needed_by=naive_local)
+    assert r.status_code == 200, f"expected 200, got {r.status_code}"
+    with Session(engine) as session:
+        from sqlmodel import select as _select
+
+        from app.models.request import BloodRequest
+
+        req = session.exec(_select(BloodRequest)).first()
+        assert req is not None
+        # In UTC, the stored value is local-6h (i.e., 6h earlier than
+        # the naive interpretation). Compare on naive datetimes because
+        # SQLite strips tzinfo on read.
+        local_as_utc = datetime.fromisoformat(naive_local)
+        delta_h = (local_as_utc - req.needed_by).total_seconds() / 3600
+        # Allow a small fudge: should be ~6h, NOT 0h.
+        assert 5.5 < delta_h < 6.5, f"expected ~6h delta, got {delta_h}h"
+
+
 def test_overlong_note_rejected(app_client, area_id):
     r = _post_valid(app_client, area_id, note="x" * 201)
     assert r.status_code == 400

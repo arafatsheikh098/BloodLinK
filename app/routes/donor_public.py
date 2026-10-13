@@ -312,16 +312,27 @@ def manage_submit(
                 select(ContactAttempt).where(ContactAttempt.donor_id == donor_id)
             ).all()
         )
+        attempt_ids = [a.id for a in attempts]
         for a in attempts:
             session.delete(a)
         # Null out audit references; we keep anonymous entries.
+        # Also null out contact_attempt_id (FK) so we don't leave the audit
+        # log pointing at deleted contact_attempt rows. (Postgres would
+        # raise a FK violation on commit otherwise; SQLite is permissive
+        # but the dangling pointer is still wrong.)
         from app.models.audit_log import AuditLog
 
         audit_rows = list(
-            session.exec(select(AuditLog).where(AuditLog.donor_id == donor_id)).all()
+            session.exec(
+                select(AuditLog).where(
+                    (AuditLog.donor_id == donor_id)
+                    | (AuditLog.contact_attempt_id.in_(attempt_ids))
+                )
+            ).all()
         )
         for row in audit_rows:
             row.donor_id = None
+            row.contact_attempt_id = None
             row.detail = None
         # Insert an anonymous audit row
         write_audit(

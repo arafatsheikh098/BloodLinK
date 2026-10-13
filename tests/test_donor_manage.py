@@ -199,6 +199,16 @@ def test_manage_delete_my_data(app_client, engine, setup):
     # Old link returns 404 now
     r2 = app_client.get(f"/donor/manage/{token}")
     assert r2.status_code == 404
+    # Audit log must NOT have any rows pointing at the now-deleted
+    # contact_attempt via contact_attempt_id (FK would be dangling
+    # otherwise; Postgres would reject the commit).
+    with Session(engine) as session:
+        dangling = list(
+            session.exec(
+                select(AuditLog).where(AuditLog.contact_attempt_id.is_not(None))
+            ).all()
+        )
+    assert dangling == [], f"audit rows still reference deleted attempts: {dangling}"
 
 
 def test_manage_regenerate_link_old_stops_working(app_client, engine, setup):
