@@ -5,27 +5,39 @@ import argparse
 import sys
 
 from app.config import get_settings
-from app.db import init_db
 from app.seed import seed_demo
 
 
 def cmd_create_coordinator(args: argparse.Namespace) -> int:
-    """Create a coordinator account."""
+    """Create a coordinator account.
+
+    The coordinators schema must already exist (run `alembic upgrade head`
+    first). We deliberately do NOT call init_db() here: silently creating
+    the schema with SQLModel.create_all would skip the migrations and
+    leave the DB out of date.
+    """
     from sqlmodel import Session, select
 
     from app.db import get_engine
     from app.models.coordinator import Coordinator
     from app.security import hash_password
 
-    init_db()
     username = args.username.strip()
     if not username:
         print("error: username is required", file=sys.stderr)
         return 2
     with Session(get_engine()) as session:
-        existing = session.exec(
-            select(Coordinator).where(Coordinator.username == username)
-        ).first()
+        try:
+            existing = session.exec(
+                select(Coordinator).where(Coordinator.username == username)
+            ).first()
+        except Exception as exc:  # noqa: BLE001
+            print(
+                f"error: could not query coordinators table ({type(exc).__name__}). "
+                "Did you run `alembic upgrade head`?",
+                file=sys.stderr,
+            )
+            return 3
         if existing:
             print(f"coordinator {username!r} already exists (id={existing.id})")
             return 1

@@ -72,6 +72,9 @@ async def webhook(
         raise HTTPException(status_code=403, detail="bad secret")
 
     payload = await request.json()
+    if not isinstance(payload, dict):
+        # Malformed update; ack so Telegram doesn't retry forever.
+        return PlainTextResponse("ok")
     await _handle_update(payload, session)
     return PlainTextResponse("ok")
 
@@ -81,12 +84,14 @@ async def webhook(
 
 async def _handle_update(update: dict, session: Session) -> None:
     """Process a single Telegram update."""
+    if not isinstance(update, dict):
+        return
     callback_query = update.get("callback_query")
-    if callback_query:
+    if isinstance(callback_query, dict):
         _handle_callback(callback_query, session)
         return
     message = update.get("message") or update.get("edited_message")
-    if not message:
+    if not isinstance(message, dict):
         return
     text = (message.get("text") or "").strip()
     if not text.startswith("/start"):
@@ -169,8 +174,6 @@ def _handle_callback(callback_query: dict, session: Session) -> None:
 
     data = callback_query.get("data") or ""
     cq_id = callback_query.get("id") or ""
-    from_user = callback_query.get("from") or {}
-    user_id = str(from_user.get("id") or "")
     payload = verify_callback(data)
     if not payload:
         answer_callback_query(cq_id, text="Link expired or invalid.")

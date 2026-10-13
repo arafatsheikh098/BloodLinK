@@ -124,3 +124,26 @@ def test_create_app_does_not_seed(temp_db, monkeypatch):
         rows = list(session.exec(select(Coordinator)).all())
     assert rows == []
     eng.dispose()
+
+
+def test_create_coordinator_fails_when_schema_missing(temp_db, monkeypatch, capsys):
+    """`create-coordinator` must fail loudly if migrations have not been run
+    (rather than silently create a partial schema)."""
+    monkeypatch.setenv("DATABASE_URL", temp_db)
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-not-for-production-use-only-ci")
+    monkeypatch.setenv("ENV", "test")
+    get_settings.cache_clear()
+
+    from sqlmodel import create_engine as ce
+
+    from app import db as app_db
+
+    # Note: NOT calling SQLModel.metadata.create_all — the schema is empty.
+    eng = ce(temp_db, connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    app_db.set_engine(eng)
+
+    rc = cli_main(["create-coordinator", "alice", "secret123"])
+    captured = capsys.readouterr()
+    assert rc == 3
+    assert "alembic upgrade head" in captured.err
+    eng.dispose()
