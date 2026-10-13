@@ -84,10 +84,17 @@ html, body {
 .brand::before {
   content: "";
   display: inline-block;
-  width: 0.75rem;
-  height: 0.75rem;
+  width: 0.8rem;
+  height: 0.8rem;
   background: var(--c-accent);
   border-radius: 50%;
+  box-shadow: 0 0 8px rgba(183, 28, 28, 0.4);
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.15); }
 }
 .site-nav {
   display: flex;
@@ -169,17 +176,25 @@ p { margin: 0 0 var(--space-3); }
   cursor: pointer;
   font-weight: 600;
   font-size: 0.95rem;
-  transition: background 0.15s ease, transform 0.05s ease;
+  transition: all 0.2s ease;
   box-shadow: var(--shadow-sm);
 }
-.button:hover { background: var(--c-accent-strong); }
-.button:active { transform: translateY(1px); }
+.button:hover {
+  background: var(--c-accent-strong);
+  box-shadow: 0 4px 10px rgba(183, 28, 28, 0.25);
+  transform: translateY(-1px);
+}
+.button:active { transform: translateY(0); }
 .button-secondary {
   background: #fff;
   color: var(--c-fg);
   border: 1px solid var(--c-border-strong);
 }
-.button-secondary:hover { background: var(--c-surface); }
+.button-secondary:hover {
+  background: var(--c-surface);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-1px);
+}
 
 form label {
   display: block;
@@ -269,6 +284,10 @@ form .checkbox input { margin-top: 0.25rem; }
   padding: var(--space-4);
   box-shadow: var(--shadow-sm);
   margin: 0 0 var(--space-4);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+  box-shadow: var(--shadow-md);
 }
 
 .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
