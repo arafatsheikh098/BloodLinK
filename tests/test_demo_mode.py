@@ -29,3 +29,18 @@ def test_demo_mode_disables_telegram_send(monkeypatch):
     ok, err = send_message("any", "x")
     assert ok is False
     assert err == "disabled"
+
+
+def test_seed_demo_refuses_without_demo_mode(monkeypatch):
+    """Running `seed_demo` against a real deployment would create donors
+    and requests with no visible marker that they are fake. The function
+    must refuse unless DEMO_MODE=true.
+    """
+    import pytest
+
+    from app.seed import seed_demo
+
+    monkeypatch.setenv("DEMO_MODE", "false")
+    get_settings.cache_clear()
+    with pytest.raises(RuntimeError, match="DEMO_MODE is not set"):
+        seed_demo()

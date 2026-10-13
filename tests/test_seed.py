@@ -1,13 +1,28 @@
 """Idempotent seed test (F11.8)."""
 from __future__ import annotations
 
+import pytest
 from sqlmodel import Session, select
 
+from app.config import get_settings
 from app.db import get_engine
 from app.models.area import Area
 from app.models.donor import Donor
 from app.models.request import BloodRequest
 from app.seed import seed_demo
+
+
+@pytest.fixture(autouse=True)
+def _enable_demo_mode(app_client, monkeypatch):
+    """seed_demo refuses to run unless DEMO_MODE=true. The app_client
+    fixture sets DEMO_MODE=false (default for the suite); we override
+    AFTER the app is built so this test module sees the right value.
+    """
+    monkeypatch.setenv("DEMO_MODE", "true")
+    get_settings.cache_clear()
+    yield
+    monkeypatch.setenv("DEMO_MODE", "false")
+    get_settings.cache_clear()
 
 
 def test_seed_creates_data(app_client):

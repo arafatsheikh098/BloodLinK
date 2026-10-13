@@ -71,6 +71,11 @@ def _recently_contacted(
     for a in attempts:
         if a.donor_id != donor_id:
             continue
+        # A failed send (no_answer) does NOT count as having reached the
+        # donor. Otherwise the matching engine silently biases itself
+        # against donors whose Telegram send failed.
+        if a.outcome == "no_answer":
+            continue
         ts = a.created_at
         if ts.tzinfo is None:
             ts = ts.replace(tzinfo=UTC)

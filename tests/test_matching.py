@@ -538,6 +538,51 @@ def test_recently_contacted_flag_old_attempt(engine, areas):
     assert out[0].recently_contacted is False
 
 
+def test_recently_contacted_ignores_no_answer_within_window(engine, areas):
+    """A no_answer (failed Telegram send) within the recent window must
+    NOT count as having reached the donor — otherwise matching would
+    silently bias itself against donors whose send failed.
+    """
+    donor = _make_donor(
+        engine,
+        name="NoAnswer",
+        phone="01712345673",
+        area_id=areas["dhanmondi"],
+    )
+    req = _make_request(engine, area_id=areas["dhanmondi"], blood_group="A+")
+    coord = Coordinator(username="c2", password_hash=hash_password("x"))
+    with Session(engine) as session:
+        session.add(coord)
+        session.commit()
+        session.refresh(coord)
+        # 1 hour ago — INSIDE 24h window, but outcome=no_answer
+        attempt = ContactAttempt(
+            donor_id=donor.id,
+            request_id=req.id,
+            coordinator_id=coord.id,
+            outcome="no_answer",
+            created_at=datetime.now(UTC) - timedelta(hours=1),
+        )
+        session.add(attempt)
+        session.commit()
+
+    donors = list(
+        Session(engine).exec(__import__("sqlmodel").select(Donor)).all()
+    )
+    attempts = list(
+        Session(engine).exec(__import__("sqlmodel").select(ContactAttempt)).all()
+    )
+    out = compute_candidates(
+        request=req,
+        donors=donors,
+        contact_attempts=attempts,
+        min_donation_gap_days=120,
+        recent_contact_hours=24,
+        now=datetime.now(UTC),
+    )
+    assert out[0].recently_contacted is False
+
+
 # --- F7.6 can_match ---------------------------------------------------------
 
 

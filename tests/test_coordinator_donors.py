@@ -418,6 +418,60 @@ def test_record_donation_rejects_future_date(logged_in, engine, areas):
     assert donor.last_donation_date is None
 
 
+def test_record_donation_refuses_suspended_donor(logged_in, engine, areas):
+    """A suspended donor must not be silently marked as having donated:
+    doing so would make them eligible again in the next matching pass.
+    """
+    d = _make_donor(
+        engine,
+        name="Sus",
+        phone="01712345683",
+        area_id=areas["dhanmondi"],
+        status=DonorStatus.SUSPENDED.value,
+    )
+    csrf = _get_donor_csrf(logged_in)
+    today = date.today().isoformat()
+    r = logged_in.post(
+        f"/coordinator/donors/{d.id}/record-donation",
+        data={"donation_date": today, "csrf_token": csrf, "note": ""},
+    )
+    assert r.status_code == 303
+    with Session(engine) as session:
+        donor = session.get(Donor, d.id)
+    # Date is unchanged.
+    assert donor.last_donation_date is None
+
+
+def test_record_donation_refuses_date_before_previous(logged_in, engine, areas):
+    """Recording a date EARLIER than the donor's last donation would
+    roll the gap-window back, making them eligible too soon.
+    """
+    d = _make_donor(
+        engine,
+        name="Roll",
+        phone="01712345684",
+        area_id=areas["dhanmondi"],
+        status=DonorStatus.VERIFIED.value,
+    )
+    with Session(engine) as session:
+        donor = session.get(Donor, d.id)
+        donor.last_donation_date = date(2026, 9, 1)
+        session.add(donor)
+        session.commit()
+
+    csrf = _get_donor_csrf(logged_in)
+    earlier = date(2026, 8, 1).isoformat()
+    r = logged_in.post(
+        f"/coordinator/donors/{d.id}/record-donation",
+        data={"donation_date": earlier, "csrf_token": csrf, "note": ""},
+    )
+    assert r.status_code == 303
+    with Session(engine) as session:
+        donor = session.get(Donor, d.id)
+    # The earlier date was rejected; the original last_donation_date stands.
+    assert donor.last_donation_date == date(2026, 9, 1)
+
+
 def test_record_donation_with_request_token_creates_contact_attempt(
     logged_in, engine, areas
 ):

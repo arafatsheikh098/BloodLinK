@@ -351,6 +351,18 @@ def donor_record_donation(
     donor = session.get(Donor, donor_id)
     if not donor:
         raise HTTPException(status_code=404, detail="donor not found")
+    # Suspended donors should not be marked as having donated. A donor
+    # may have been suspended for a reason (safety flag, age-out, etc.)
+    # and recording a donation on their record would mark them eligible
+    # again in the next matching pass.
+    if donor.status == DonorStatus.SUSPENDED.value:
+        flash(
+            request,
+            "error",
+            "Cannot record a donation for a suspended donor. "
+            "Unsuspend them first if this is in error.",
+        )
+        return RedirectResponse(url=f"/coordinator/donors/{donor_id}", status_code=303)
     try:
         d = date.fromisoformat(donation_date)
     except ValueError:
@@ -358,6 +370,17 @@ def donor_record_donation(
         return RedirectResponse(url=f"/coordinator/donors/{donor_id}", status_code=303)
     if d > date.today():
         flash(request, "error", "Donation date cannot be in the future.")
+        return RedirectResponse(url=f"/coordinator/donors/{donor_id}", status_code=303)
+    # Enforce the 90-day donation gap: a donor who donated recently should
+    # not be marked as donating again, or the matching engine's eligibility
+    # check (last_donation_date + 90d) becomes a no-op.
+    if donor.last_donation_date and d < donor.last_donation_date:
+        flash(
+            request,
+            "error",
+            f"Donation date {d} is before the donor's previous donation "
+            f"on {donor.last_donation_date}. Refusing to overwrite.",
+        )
         return RedirectResponse(url=f"/coordinator/donors/{donor_id}", status_code=303)
     donor.last_donation_date = d
     donor.updated_at = datetime.now(UTC)

@@ -35,7 +35,22 @@ def _demo_phones() -> dict[str, str]:
 
 
 def seed_demo(engine: Any = None) -> None:
-    """Idempotently insert demo data."""
+    """Idempotently insert demo data.
+
+    Refuses to run if DEMO_MODE is not enabled in settings. This is a
+    safety belt: running the seed against a real deployment would leave
+    fake donors / requests in the coordinator's queue with no visible
+    marker, and the masked phone numbers (e.g. +880175••••••001) could
+    be mistaken for real data.
+    """
+    from app.config import get_settings
+
+    if not get_settings().demo_mode:
+        raise RuntimeError(
+            "seed_demo refuses to run because DEMO_MODE is not set. "
+            "Set DEMO_MODE=true in the environment first, or run on a "
+            "demo deployment only."
+        )
     if engine is None:
         from app.db import get_engine
 
