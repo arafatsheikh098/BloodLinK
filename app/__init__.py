@@ -64,12 +64,14 @@ def _maybe_seed_coordinator(settings) -> None:
 
 
 def _register_routes(app: FastAPI) -> None:
-    from app.routes import auth, health, home, lang
+    from app.routes import areas, auth, donor_public, health, home, lang
 
     app.include_router(health.router)
     app.include_router(home.router)
     app.include_router(lang.router)
     app.include_router(auth.router)
+    app.include_router(areas.router)
+    app.include_router(donor_public.router)
 
 
 def _register_error_handlers(app: FastAPI) -> None:

@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("donor.register.title") }}</h1>
+<p class="muted">{{ t("donor.register.intro") }}</p>
+
+<form method="post" action="/donor/register">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+  <label for="name">{{ t("donor.register.name") }}</label>
+  <input id="name" name="name" type="text" required maxlength="120" value="{{ values.get('name','') }}">
+  {% if errors.name %}<div class="error">{{ errors.name }}</div>{% endif %}
+
+  <label for="blood_group">{{ t("donor.register.blood_group") }}</label>
+  <select id="blood_group" name="blood_group" required>
+    <option value="">--</option>
+    {% for g in blood_groups %}
+      <option value="{{ g }}" {% if values.get('blood_group')==g %}selected{% endif %}>{{ g }}</option>
+    {% endfor %}
+  </select>
+  {% if errors.blood_group %}<div class="error">{{ errors.blood_group }}</div>{% endif %}
+
+  <label for="phone">{{ t("donor.register.phone") }}</label>
+  <input id="phone" name="phone" type="tel" required inputmode="tel" autocomplete="tel" placeholder="01XXXXXXXXX" value="{{ values.get('phone','') }}">
+  <p class="help">{{ t("donor.register.phone_help") }}</p>
+  {% if errors.phone %}<div class="error">{{ errors.phone }}</div>{% endif %}
+
+  <label for="area_id">{{ t("donor.register.area") }}</label>
+  <select id="area_id" name="area_id" required>
+    <option value="">--</option>
+    {% for a in areas %}
+      <option value="{{ a.id }}" {% if values.get('area_id')==a.id %}selected{% endif %}>{{ a.name }}</option>
+    {% endfor %}
+  </select>
+  {% if errors.area_id %}<div class="error">{{ errors.area_id }}</div>{% endif %}
+
+  <label for="last_donation_date">{{ t("donor.register.last_donation_date") }}</label>
+  <input id="last_donation_date" name="last_donation_date" type="date" max="{{ today or '' }}" value="{{ values.get('last_donation_date','') }}">
+  {% if errors.last_donation_date %}<div class="error">{{ errors.last_donation_date }}</div>{% endif %}
+
+  <p>
+    <label><input type="checkbox" name="is_over_18" value="yes" required> {{ t("donor.register.over_18") }}</label>
+    {% if errors.is_over_18 %}<div class="error">{{ errors.is_over_18 }}</div>{% endif %}
+  </p>
+  <p>
+    <label><input type="checkbox" name="consent_contact" value="yes" required> {{ t("donor.register.consent_contact") }}</label>
+    {% if errors.consent_contact %}<div class="error">{{ errors.consent_contact }}</div>{% endif %}
+  </p>
+  <p>
+    <label><input type="checkbox" name="consent_verify" value="yes" required> {{ t("donor.register.consent_verify") }}</label>
+    {% if errors.consent_verify %}<div class="error">{{ errors.consent_verify }}</div>{% endif %}
+  </p>
+
+  <p><button class="button" type="submit">{{ t("donor.register.submit") }}</button></p>
+</form>
+{% endblock %}

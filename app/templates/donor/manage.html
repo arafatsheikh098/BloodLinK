@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("donor.manage.title") }}</h1>
+<p class="muted">{{ t("donor.manage.status") }}: {{ donor.status }} · {{ t("donor.manage.phone") }}: {{ phone_masked }}</p>
+<p class="muted">{{ donor.name }} ({{ donor.blood_group }})</p>
+
+{% for f in flashes %}
+  <div class="flash flash-{{ f.level }}">{{ f.message }}</div>
+{% endfor %}
+
+<form method="post" action="/donor/manage/{{ token }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="action" value="update">
+
+  <p>
+    <label><input type="checkbox" name="is_available" value="yes" {% if donor.is_available %}checked{% endif %}> {{ t("donor.manage.available") }}</label>
+  </p>
+
+  <label for="area_id">{{ t("donor.manage.area") }}</label>
+  <select id="area_id" name="area_id" required>
+    {% for a in areas %}
+      <option value="{{ a.id }}" {% if a.id==donor.area_id %}selected{% endif %}>{{ a.name }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="last_donation_date">{{ t("donor.manage.last_donation_date") }}</label>
+  <input id="last_donation_date" name="last_donation_date" type="date" value="{{ donor.last_donation_date.isoformat() if donor.last_donation_date else '' }}">
+
+  <label for="phone">{{ t("donor.manage.phone_label") }}</label>
+  <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="{{ phone_masked }}">
+  <p class="help">{{ t("donor.manage.phone_help") }}</p>
+  {% if errors.phone %}<div class="error">{{ errors.phone }}</div>{% endif %}
+
+  <p><button class="button" type="submit">{{ t("donor.manage.save") }}</button></p>
+</form>
+
+<form method="post" action="/donor/manage/{{ token }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <input type="hidden" name="action" value="delete">
+  <p><button class="button button-secondary" type="submit">{{ t("donor.manage.delete") }}</button></p>
+  <p class="help">{{ t("donor.manage.delete_confirm") }}</p>
+</form>
+{% endblock %}
