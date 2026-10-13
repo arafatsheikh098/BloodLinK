@@ -49,4 +49,7 @@ target-version = "py312"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP"]
-ignore = ["E501"]
+# E501: line length handled by formatter
+# UP042: we use (str, Enum) deliberately so values serialize as plain
+#        strings and remain forward-compatible with older Python tooling.
+ignore = ["E501", "UP042"]

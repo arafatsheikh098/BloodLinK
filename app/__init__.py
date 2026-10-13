@@ -73,14 +73,14 @@ def _register_routes(app: FastAPI) -> None:
         coordinator_requests,
         donor_public,
         health,
-        home,
         lang,
+        public,
         request_public,
         telegram,
     )
 
     app.include_router(health.router)
-    app.include_router(home.router)
+    app.include_router(public.router)
     app.include_router(lang.router)
     app.include_router(auth.router)
     app.include_router(areas.router)

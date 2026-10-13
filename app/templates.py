@@ -22,12 +22,12 @@ def make_templates() -> Jinja2Templates:
     )
     env.globals["t"] = i18n_mod.t
     env.globals["get_settings"] = get_settings
+    env.globals["demo_mode"] = is_demo_mode
     env.filters["t"] = lambda key, **p: i18n_mod.t(key, **p)
 
     templates = Jinja2Templates(env=env)
     templates.env = env  # type: ignore[attr-defined]
 
-    # Make static_url_for and request context available to templates.
     return templates
 
 

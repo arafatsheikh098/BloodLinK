@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("stats.title") }}</h1>
+<p class="muted">{{ t("stats.intro") }}</p>
+
+<p class="muted">{{ t("stats.total", n=stats.total) }}</p>
+
+{% if stats.rows %}
+<table>
+  <tr>
+    <th>{{ t("stats.col.area") }}</th>
+    {% for g in stats.columns %}
+      <th>{{ g }}</th>
+    {% endfor %}
+  </tr>
+  {% for area_name in stats.rows %}
+    <tr>
+      <th>{{ area_name }}</th>
+      {% for g in stats.columns %}
+        {% set c = stats.cells.get((area_name, g)) %}
+        <td>
+          {% if c is none %}—
+          {% elif c.suppressed %}<span class="muted">{{ t("stats.fewer_than", n=stats.threshold) }}</span>
+          {% else %}{{ c.count }}
+          {% endif %}
+        </td>
+      {% endfor %}
+    </tr>
+  {% endfor %}
+</table>
+{% else %}
+  <p class="muted">{{ t("stats.empty") }}</p>
+{% endif %}
+<p class="muted">{{ t("stats.note") }}</p>
+{% endblock %}

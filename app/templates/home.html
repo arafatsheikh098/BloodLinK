@@ -2,5 +2,22 @@
 {% block content %}
 <h1>{{ t("app.name") }}</h1>
 <p class="muted">{{ t("app.tagline") }}</p>
-<p>{{ t("footer.notice") }}</p>
+
+<h2>{{ t("home.how_it_works") }}</h2>
+<ol>
+  <li>{{ t("home.step1") }}</li>
+  <li>{{ t("home.step2") }}</li>
+  <li>{{ t("home.step3") }}</li>
+</ol>
+
+<h2>{{ t("home.safety_title") }}</h2>
+<p>{{ t("home.safety_body") }}</p>
+<p class="muted">{{ t("home.helpline") }}</p>
+
+<p>
+  <a class="button" href="/donor/register">{{ t("nav.donor_register") }}</a>
+  <a class="button button-secondary" href="/request/new">{{ t("nav.request") }}</a>
+</p>
+
+<p class="muted">{{ t("footer.notice") }}</p>
 {% endblock %}

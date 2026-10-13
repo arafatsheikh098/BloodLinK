@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("privacy.title") }}</h1>
+<p class="muted">{{ t("privacy.intro") }}</p>
+
+<h2>{{ t("privacy.collect_title") }}</h2>
+<ul>
+  <li>{{ t("privacy.collect.donor") }}</li>
+  <li>{{ t("privacy.collect.request") }}</li>
+  <li>{{ t("privacy.collect.coordinator") }}</li>
+</ul>
+
+<h2>{{ t("privacy.use_title") }}</h2>
+<p>{{ t("privacy.use_body") }}</p>
+
+<h2>{{ t("privacy.share_title") }}</h2>
+<p>{{ t("privacy.share_body") }}</p>
+
+<h2>{{ t("privacy.retention_title") }}</h2>
+<p>{{ t("privacy.retention_body") }}</p>
+
+<h2>{{ t("privacy.deletions_title") }}</h2>
+<p>{{ t("privacy.deletions_body") }}</p>
+
+<h2>{{ t("privacy.contact_title") }}</h2>
+<p class="muted">{{ t("privacy.contact_body") }}</p>
+{% endblock %}
