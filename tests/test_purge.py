@@ -150,9 +150,9 @@ def test_purge_with_freezegun(app_client, area_id):
             area_id=area_id,
             closed_at=datetime(2026, 9, 13, 10, 0, 0, tzinfo=UTC),
         )
-    # 30 days retention at base 2026-10-13 → cutoff = 2026-09-13 10:00:00
-    # closed_at == cutoff → not strictly older → keep
-    n = purge_old_requests(retention_days=30)
+        # 30 days retention at base 2026-10-13 → cutoff = 2026-09-13 10:00:00
+        # closed_at == cutoff → not strictly older → keep
+        n = purge_old_requests(retention_days=30)
     with Session(get_engine()) as session:
         r2 = session.get(BloodRequest, r.id)
     assert r2.requester_name == "Original Name"

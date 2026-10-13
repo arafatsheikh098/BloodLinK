@@ -23,6 +23,7 @@ class AuditAction(str, Enum):
     # Coordinator actions on requests
     REQUEST_VERIFY = "request_verify"
     REQUEST_REJECT = "request_reject"
+    REQUEST_FULFILL = "request_fulfill"
     REQUEST_CANCEL = "request_cancel"
     # Matching / contact
     CONTACT_ATTEMPT = "contact_attempt"

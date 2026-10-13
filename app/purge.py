@@ -45,7 +45,7 @@ def purge_old_requests(retention_days: int) -> int:
                 continue
             if closed_at.tzinfo is None:
                 closed_at = closed_at.replace(tzinfo=UTC)
-            if closed_at > cutoff:
+            if closed_at >= cutoff:
                 continue
             r.requester_name = ""
             r.requester_phone_normalized = ""

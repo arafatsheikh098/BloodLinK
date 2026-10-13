@@ -154,7 +154,8 @@ def _link_chat_to_donor(
         AuditAction.TELEGRAM_LINK_COMPLETE,
         actor_kind="donor",
         donor_id=link.donor_id,
-        detail=f"chat_id={user_id}",
+        # No chat_id in detail — F11.1: the audit log must not contain
+        # identifiers that could pin a person.
     )
     session.commit()
 
@@ -222,7 +223,7 @@ def _handle_callback(callback_query: dict, session: Session) -> None:
         donor_id=donor_id,
         request_id=request_id,
         contact_attempt_id=attempt_id,
-        detail=f"chat_id={user_id}",
+        # No chat_id in detail — F11.1.
     )
     session.commit()
     answer_callback_query(cq_id, text=text)

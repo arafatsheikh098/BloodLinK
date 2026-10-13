@@ -235,7 +235,7 @@ def request_fulfill(
     req.updated_at = datetime.now(UTC)
     write_audit(
         session,
-        "request_fulfill",
+        AuditAction.REQUEST_FULFILL,
         actor_kind="coordinator",
         coordinator_id=current.id,
         request_id=req.id,
