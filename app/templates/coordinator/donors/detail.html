@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("coordinator.donors.detail_title") }}</h1>
+
+{% for f in flashes %}
+  <div class="flash flash-{{ f.level }}">{{ f.message }}</div>
+{% endfor %}
+
+<p class="muted">
+  <strong>{{ donor.name }}</strong> ({{ donor.blood_group }}) ·
+  {{ t("coordinator.donors.status_" ~ donor.status) }}
+</p>
+
+<h3>Phone</h3>
+<p>{{ t("donor.manage.phone") }}: <code>{{ phone_masked }}</code></p>
+{% if phone_revealed %}
+  <p class="reveal">
+    <strong>{{ t("coordinator.donors.revealed_phone") }}:</strong>
+    <code>{{ phone_revealed }}</code>
+  </p>
+  <p class="muted">{{ t("coordinator.donors.reveal_warning") }}</p>
+  <form method="post" action="/coordinator/donors/{{ donor.id }}/reveal-phone/clear">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="button button-secondary" type="submit">Hide phone</button>
+  </form>
+{% else %}
+  <form method="post" action="/coordinator/donors/{{ donor.id }}/reveal-phone">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="button button-secondary" type="submit">{{ t("coordinator.donors.reveal") }}</button>
+  </form>
+{% endif %}
+
+<h3>Area</h3>
+<p>
+  {% for a in areas %}
+    {% if a.id == donor.area_id %}{{ a.name }}{% endif %}
+  {% endfor %}
+</p>
+
+<h3>Status</h3>
+{% if donor.status == "unverified" %}
+  <form method="post" action="/coordinator/donors/{{ donor.id }}/verify">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="verify-note">{{ t("coordinator.donors.verify_note_label") }}</label>
+    <textarea id="verify-note" name="note" maxlength="500"></textarea>
+    <p class="muted">{{ t("coordinator.donors.verify_note_help") }} {{ t("coordinator.donors.note_warning") }}</p>
+    <p><button class="button" type="submit">{{ t("coordinator.donors.verify") }}</button></p>
+  </form>
+{% elif donor.status == "verified" %}
+  <form method="post" action="/coordinator/donors/{{ donor.id }}/suspend">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label for="suspend-note">{{ t("coordinator.donors.note_label") }}</label>
+    <textarea id="suspend-note" name="note" maxlength="500"></textarea>
+    <p class="muted">{{ t("coordinator.donors.note_warning") }}</p>
+    <p><button class="button button-secondary" type="submit">{{ t("coordinator.donors.suspend") }}</button></p>
+  </form>
+{% elif donor.status == "suspended" %}
+  <form method="post" action="/coordinator/donors/{{ donor.id }}/unsuspend">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <p><button class="button" type="submit">{{ t("coordinator.donors.unsuspend") }}</button></p>
+  </form>
+{% endif %}
+
+{% if donor.verify_note %}
+  <p><em>Note on file:</em> {{ donor.verify_note }}</p>
+{% endif %}
+
+<h3>Manage link</h3>
+<form method="post" action="/coordinator/donors/{{ donor.id }}/regenerate-link">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <p>{{ t("coordinator.donors.regenerate_link_help") }}</p>
+  <p><button class="button button-secondary" type="submit">{{ t("coordinator.donors.regenerate_link_button") }}</button></p>
+</form>
+{% if new_manage_link %}
+  <div class="flash flash-success">
+    <p>{{ t("coordinator.donors.regenerate_link_shown") }}</p>
+    <p><a class="button" href="/donor/manage/{{ new_manage_link }}">/donor/manage/{{ new_manage_link }}</a></p>
+  </div>
+{% endif %}
+
+<h3>{{ t("coordinator.donors.record_donation_title") }}</h3>
+<form method="post" action="/coordinator/donors/{{ donor.id }}/record-donation">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <label for="donation_date">{{ t("coordinator.donors.record_donation_date") }}</label>
+  <input id="donation_date" name="donation_date" type="date" max="{{ today }}" required>
+  <label for="request_token">{{ t("coordinator.donors.record_donation_request") }}</label>
+  <input id="request_token" name="request_token" type="text">
+  <label for="rec-note">{{ t("coordinator.donors.note_label") }}</label>
+  <textarea id="rec-note" name="note" maxlength="500"></textarea>
+  <p class="muted">{{ t("coordinator.donors.note_warning") }}</p>
+  <p><button class="button" type="submit">{{ t("coordinator.donors.record_donation") }}</button></p>
+</form>
+
+<h3>{{ t("coordinator.donors.contact_attempts") }}</h3>
+{% if contact_attempts %}
+<table>
+  <tr><th>When</th><th>Outcome</th><th>Note</th></tr>
+  {% for a in contact_attempts %}
+    <tr>
+      <td>{{ a.created_at.isoformat() }}</td>
+      <td>{{ a.outcome }}</td>
+      <td>{{ a.note or "" }}</td>
+    </tr>
+  {% endfor %}
+</table>
+{% else %}
+  <p class="muted">{{ t("coordinator.donors.no_contact_attempts") }}</p>
+{% endif %}
+
+<p><a href="/coordinator/donors">← {{ t("coordinator.donors.list_title") }}</a></p>
+{% endblock %}

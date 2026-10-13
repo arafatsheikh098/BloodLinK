@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>{{ t("coordinator.donors.list_title") }}</h1>
+
+{% for f in flashes %}
+  <div class="flash flash-{{ f.level }}">{{ f.message }}</div>
+{% endfor %}
+
+<form method="get" action="/coordinator/donors" class="filters">
+  <p>
+    <label for="q">{{ t("coordinator.donors.search") }}</label>
+    <input id="q" name="q" type="text" value="{{ filters.q }}">
+  </p>
+  <p>
+    <label for="blood_group">{{ t("coordinator.donors.filter.blood_group") }}</label>
+    <select id="blood_group" name="blood_group">
+      <option value="">{{ t("coordinator.donors.filter.any") }}</option>
+      {% for g in blood_groups %}
+        <option value="{{ g }}" {% if filters.blood_group==g %}selected{% endif %}>{{ g }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="area_id">{{ t("coordinator.donors.filter.area") }}</label>
+    <select id="area_id" name="area_id">
+      <option value="">{{ t("coordinator.donors.filter.any") }}</option>
+      {% for a in areas %}
+        <option value="{{ a.id }}" {% if filters.area_id==a.id|string %}selected{% endif %}>{{ a.name }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="status">{{ t("coordinator.donors.filter.status") }}</label>
+    <select id="status" name="status">
+      <option value="">{{ t("coordinator.donors.filter.any") }}</option>
+      {% for s in statuses %}
+        <option value="{{ s }}" {% if filters.status==s %}selected{% endif %}>{{ t("coordinator.donors.status_" ~ s) }}</option>
+      {% endfor %}
+    </select>
+  </p>
+  <p>
+    <label for="availability">{{ t("coordinator.donors.filter.availability") }}</label>
+    <select id="availability" name="availability">
+      <option value="">{{ t("coordinator.donors.filter.any") }}</option>
+      <option value="available" {% if filters.availability=="available" %}selected{% endif %}>{{ t("coordinator.donors.filter.available") }}</option>
+      <option value="unavailable" {% if filters.availability=="unavailable" %}selected{% endif %}>{{ t("coordinator.donors.filter.unavailable") }}</option>
+    </select>
+  </p>
+  <p><button class="button" type="submit">{{ t("coordinator.donors.filter.apply") }}</button></p>
+</form>
+
+<p class="muted">{{ t("coordinator.donors.page_of", n=page, total=total_pages) }} — {{ total }} total</p>
+
+{% if donors %}
+<table class="donor-list">
+  <tr>
+    <th>{{ t("coordinator.donors.col.name") }}</th>
+    <th>{{ t("coordinator.donors.col.blood") }}</th>
+    <th>{{ t("coordinator.donors.col.area") }}</th>
+    <th>{{ t("coordinator.donors.col.phone") }}</th>
+    <th>{{ t("coordinator.donors.col.status") }}</th>
+    <th>{{ t("coordinator.donors.col.last_donation") }}</th>
+    <th>{{ t("coordinator.donors.col.actions") }}</th>
+  </tr>
+  {% for d in donors %}
+    <tr>
+      <td>{{ d.name }}</td>
+      <td>{{ d.blood_group }}</td>
+      <td>
+        {% for a in areas %}
+          {% if a.id == d.area_id %}{{ a.name }}{% endif %}
+        {% endfor %}
+      </td>
+      <td>{{ mask_phone(d.phone_normalized) }}</td>
+      <td>{{ t("coordinator.donors.status_" ~ d.status) }}</td>
+      <td>{{ d.last_donation_date.isoformat() if d.last_donation_date else "—" }}</td>
+      <td>
+        <a href="/coordinator/donors/{{ d.id }}">{{ t("coordinator.donors.view") }}</a>
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+
+{% if total_pages > 1 %}
+<nav class="pagination">
+  {% if page > 1 %}
+    <a class="button" href="?{% for k, v in filters.items() %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page - 1 }}">{{ t("coordinator.donors.page_prev") }}</a>
+  {% endif %}
+  {% if page < total_pages %}
+    <a class="button" href="?{% for k, v in filters.items() %}{% if v %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page + 1 }}">{{ t("coordinator.donors.page_next") }}</a>
+  {% endif %}
+</nav>
+{% endif %}
+{% else %}
+  <p class="muted">{{ t("coordinator.donors.empty") }}</p>
+{% endif %}
+{% endblock %}
