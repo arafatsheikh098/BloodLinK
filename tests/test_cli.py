@@ -74,13 +74,40 @@ def test_custom_secret_accepted_in_production(monkeypatch):
     s.validate_production()  # no raise
 
 
-def test_seed_coordinator_from_env_on_first_start(temp_db, monkeypatch):
-    """F1.7: on first start, if no coordinator exists, one is seeded from env."""
+def test_seed_coordinator_via_cli(temp_db, monkeypatch):
+    """F1.7: the create-coordinator CLI is the supported way to seed the
+    first coordinator. (Auto-seed at app start was removed because it ran
+    before migrations on a fresh install.)
+    """
     monkeypatch.setenv("DATABASE_URL", temp_db)
     monkeypatch.setenv("SECRET_KEY", "test-secret-key-not-for-production-use-only-ci")
     monkeypatch.setenv("ENV", "test")
-    monkeypatch.setenv("SEED_COORDINATOR_USERNAME", "bootuser")
-    monkeypatch.setenv("SEED_COORDINATOR_PASSWORD", "bootpass")
+    get_settings.cache_clear()
+
+    from sqlmodel import create_engine as ce
+
+    from app import db as app_db
+
+    eng = ce(temp_db, connect_args={"check_same_thread": False}, poolclass=StaticPool)
+    app_db.set_engine(eng)
+    SQLModel.metadata.create_all(eng)
+
+    rc = cli_main(["create-coordinator", "bootuser", "bootpass"])
+    assert rc == 0
+    with Session(eng) as session:
+        rows = list(session.exec(select(Coordinator)).all())
+    assert any(r.username == "bootuser" for r in rows)
+    eng.dispose()
+
+
+def test_create_app_does_not_seed(temp_db, monkeypatch):
+    """create_app() must NOT auto-create coordinators (would run before
+    migrations on a fresh install)."""
+    monkeypatch.setenv("DATABASE_URL", temp_db)
+    monkeypatch.setenv("SECRET_KEY", "test-secret-key-not-for-production-use-only-ci")
+    monkeypatch.setenv("ENV", "test")
+    monkeypatch.delenv("SEED_COORDINATOR_USERNAME", raising=False)
+    monkeypatch.delenv("SEED_COORDINATOR_PASSWORD", raising=False)
     get_settings.cache_clear()
 
     from sqlmodel import create_engine as ce
@@ -95,5 +122,5 @@ def test_seed_coordinator_from_env_on_first_start(temp_db, monkeypatch):
     create_app()
     with Session(eng) as session:
         rows = list(session.exec(select(Coordinator)).all())
-    assert any(r.username == "bootuser" for r in rows)
+    assert rows == []
     eng.dispose()

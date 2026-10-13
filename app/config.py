@@ -27,13 +27,6 @@ class Settings(BaseSettings):
 
     database_url: str = Field(default="sqlite:///./bloodlink.db", alias="DATABASE_URL")
 
-    seed_coordinator_username: str | None = Field(
-        default=None, alias="SEED_COORDINATOR_USERNAME"
-    )
-    seed_coordinator_password: str | None = Field(
-        default=None, alias="SEED_COORDINATOR_PASSWORD"
-    )
-
     demo_mode: bool = Field(default=False, alias="DEMO_MODE")
 
     telegram_bot_token: str | None = Field(default=None, alias="TELEGRAM_BOT_TOKEN")

@@ -30,37 +30,12 @@ def create_app() -> FastAPI:
     mount_static(app)
     _register_routes(app)
     _register_error_handlers(app)
-    _maybe_seed_coordinator(settings)
-
+    # Coordinator seeding is opt-in via the
+    # `python -m app.cli create-coordinator USER PASS` command, run after
+    # `alembic upgrade head`. We deliberately do NOT auto-create coordinators
+    # at app start: it would (a) run before migrations exist on a fresh
+    # install, and (b) be a footgun in production.
     return app
-
-
-def _maybe_seed_coordinator(settings) -> None:
-    """On first start, if no coordinator exists and SEED_COORDINATOR_PASSWORD is set,
-    create one from env. This is opt-in: leave SEED_COORDINATOR_PASSWORD empty to skip.
-    """
-    from sqlmodel import Session, select
-
-    from app.models.coordinator import Coordinator
-    from app.security import hash_password
-
-    if not settings.seed_coordinator_username or not settings.seed_coordinator_password:
-        return
-    with Session(make_engine(settings)) as session:
-        existing = session.exec(
-            select(Coordinator).where(
-                Coordinator.username == settings.seed_coordinator_username
-            )
-        ).first()
-        if existing:
-            return
-        session.add(
-            Coordinator(
-                username=settings.seed_coordinator_username,
-                password_hash=hash_password(settings.seed_coordinator_password),
-            )
-        )
-        session.commit()
 
 
 def _register_routes(app: FastAPI) -> None:
