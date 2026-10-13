@@ -34,13 +34,19 @@ cleanup() {
 }
 trap cleanup EXIT
 
-# Wait for the server.
-for i in {1..40}; do
+# Wait for the server. Retry up to ~80 s because the first request after
+# startup also triggers JIT-style imports (Telegram imports guard, etc.).
+for i in {1..200}; do
     if curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null 2>&1; then
         break
     fi
-    sleep 0.25
+    sleep 0.4
 done
+# One more request — the first /health probe can succeed while the app
+# is still warming up routes.
+if ! curl -fsS "http://127.0.0.1:$PORT/health" >/dev/null 2>&1; then
+    fail "server never became ready on port $PORT"
+fi
 
 fail() { echo "FAIL: $1" >&2; tail -40 "$LOG" >&2; exit 1; }
 expect() {

@@ -1,0 +1,66 @@
+# Render Blueprint for BloodLink.
+#
+# Two services:
+#   1. bloodlink-db      — managed Postgres
+#   2. bloodlink-web     — FastAPI on uvicorn
+#
+# Provision with:  render blueprint launch
+#
+# Then create the first coordinator from the shell:
+#   render shell bloodlink-web --command "python -m app.cli create-coordinator coord 'STRONG-PASSWORD'"
+
+services:
+  - type: pserv
+    name: bloodlink-db
+    plan: starter
+    databaseName: bloodlink
+    databaseUser: bloodlink
+    ipAllowList: []  # only reachable from bloodlink-web inside the VPC
+    # Production DBs are private-by-default; we keep the IP allow-list empty.
+
+  - type: web
+    name: bloodlink-web
+    plan: starter
+    runtime: python
+    buildCommand: pip install --upgrade pip && pip install -e .
+    startCommand: >
+      sh -c "alembic upgrade head &&
+             python -m app.cli create-coordinator $$COORD_USERNAME $$COORD_PASSWORD &&
+             uvicorn app:app --host 0.0.0.0 --port $$PORT --proxy-headers"
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true   # Render-issued 32-byte secret
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: bloodlink-db
+          property: connectionString
+      - key: COORD_USERNAME
+        sync: false           # set in the Render dashboard on first deploy
+      - key: COORD_PASSWORD
+        sync: false
+      - key: DISPLAY_TIMEZONE
+        value: Asia/Dhaka
+      - key: MIN_DONATION_GAP_DAYS
+        value: "120"
+      - key: RECENT_CONTACT_HOURS
+        value: "24"
+      - key: RETENTION_DAYS
+        value: "30"
+      - key: SMALL_NUMBER_SUPPRESSION_THRESHOLD
+        value: "3"
+      - key: DEMO_MODE
+        value: "false"
+      # Telegram is optional. Set TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET,
+      # and TELEGRAM_PUBLIC_BASE_URL in the dashboard, then point the
+      # webhook at https://<service>.onrender.com/telegram/webhook.
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_WEBHOOK_SECRET
+        sync: false
+      - key: TELEGRAM_PUBLIC_BASE_URL
+        sync: false
