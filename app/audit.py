@@ -76,5 +76,9 @@ def _safe_detail(detail: Any) -> str | None:
                 "do not pass phone, chat_id, token hash, or email to write_audit"
             )
     if len(s) > 500:
-        s = s[:500]
+        # Truncating would let a long PII-containing string sneak through the
+        # regex check after a quiet chop. Force the caller to shorten.
+        raise ValueError(
+            f"audit detail too long ({len(s)} > 500 chars); shorten the message"
+        )
     return s

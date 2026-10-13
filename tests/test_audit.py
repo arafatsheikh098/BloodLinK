@@ -18,14 +18,14 @@ def test_write_audit_inserts_row(engine):
     assert rows[0].coordinator_id == 1
 
 
-def test_write_audit_truncates_long_detail(engine):
-    with Session(engine) as session:
-        write_audit(session, AuditAction.DONOR_VERIFY, detail="x" * 1000)
-        session.commit()
-        row = session.exec(select(AuditLog)).first()
-    assert row is not None
-    assert row.detail is not None
-    assert len(row.detail) <= 500
+def test_write_audit_rejects_oversized_detail(engine):
+    with pytest.raises(ValueError, match="too long"):
+        _safe_detail("x" * 1000)
+
+
+def test_write_audit_accepts_detail_at_limit():
+    assert _safe_detail("x" * 500) is not None
+    assert len(_safe_detail("x" * 500)) == 500
 
 
 def test_write_audit_accepts_string_action(engine):
@@ -67,8 +67,7 @@ def test_safe_detail_allows_short_ids():
     assert _safe_detail(None) is None
 
 
-def test_safe_detail_truncates_non_pii():
+def test_safe_detail_rejects_oversized():
     s = "x" * 1000
-    out = _safe_detail(s)
-    assert out is not None
-    assert len(out) == 500
+    with pytest.raises(ValueError, match="too long"):
+        _safe_detail(s)

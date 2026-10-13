@@ -69,12 +69,12 @@ def _make_donor(
 
 
 def _make_request(engine, *, area_id: int, blood_group: str = "A+", needed_by: datetime | None = None) -> BloodRequest:
-    from app.tokens import new_token
+    from app.tokens import hash_token, new_token
 
     nb = needed_by or (datetime.now(UTC) + timedelta(hours=6))
     with Session(engine) as session:
         req = BloodRequest(
-            public_token=new_token(24),
+            public_token_hash=hash_token(new_token(24)),
             blood_group=blood_group,
             units=2,
             hospital_name="H",
@@ -542,7 +542,7 @@ def test_recently_contacted_flag_old_attempt(engine, areas):
 
 
 def test_can_match_only_for_verified(engine, areas):
-    from app.tokens import new_token
+    from app.tokens import hash_token, new_token
 
     needed = datetime.now(UTC) + timedelta(hours=6)
     with Session(engine) as session:
@@ -554,7 +554,7 @@ def test_can_match_only_for_verified(engine, areas):
             RequestStatus.CANCELLED.value,
         ):
             req = BloodRequest(
-                public_token=new_token(24),
+                public_token_hash=hash_token(new_token(24)),
                 blood_group="A+",
                 units=1,
                 hospital_name="H",

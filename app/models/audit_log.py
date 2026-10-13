@@ -20,7 +20,9 @@ class AuditAction(str, Enum):
     DONOR_REGENERATE_LINK = "donor_regenerate_link"
     DONOR_RECORD_DONATION = "donor_record_donation"
     DONOR_SELF_DELETE = "donor_self_delete"
+    DONOR_REGISTER = "donor_register"
     # Coordinator actions on requests
+    REQUEST_CREATE = "request_create"
     REQUEST_VERIFY = "request_verify"
     REQUEST_REJECT = "request_reject"
     REQUEST_FULFILL = "request_fulfill"

@@ -25,7 +25,7 @@
   </table>
 
   {% if effective in ["pending", "verified"] %}
-    <form method="post" action="/request/{{ req.public_token }}">
+    <form method="post" action="/request/{{ public_token }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
       <p class="help">{{ t("request.tracking.cancel_confirm") }}</p>
       <p><button class="button button-secondary" type="submit">{{ t("request.tracking.cancel") }}</button></p>

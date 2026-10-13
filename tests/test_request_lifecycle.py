@@ -16,6 +16,7 @@ from app.models.coordinator import Coordinator
 from app.models.request import BloodRequest, RequestStatus
 from app.request_validation import effective_status
 from app.security import hash_password
+from app.tokens import hash_token
 
 
 @pytest.fixture
@@ -76,7 +77,7 @@ def _seed_request(
     needed = needed_by or (datetime.now(UTC) + timedelta(hours=6))
     with Session(engine) as session:
         req = BloodRequest(
-            public_token=token,
+            public_token_hash=hash_token(token),
             blood_group="A+",
             units=2,
             hospital_name="H",
@@ -131,7 +132,7 @@ def test_matching_only_uses_verified_requests(engine, area_id):
     with Session(engine) as session:
         for key, status in cases:
             req = BloodRequest(
-                public_token=f"tok_{key}",
+                public_token_hash=hash_token(f"tok_{key}"),
                 blood_group="A+",
                 units=1,
                 hospital_name="H",
@@ -221,9 +222,9 @@ def test_cannot_reject_terminal_request(logged_in, engine, area_id):
 
 def test_tracking_hides_requester_pii(app_client, engine, area_id):
     """The tracker must NOT show requester name or phone."""
-    req = _seed_request(engine, area_id, token="abcd1234abcd1234abcd1234")
+    _seed_request(engine, area_id, token="abcd1234abcd1234abcd1234")
     # Use a separate client that is NOT logged in
-    r = app_client.get(f"/request/{req.public_token}")
+    r = app_client.get("/request/abcd1234abcd1234abcd1234")
     assert r.status_code == 200
     # No requester phone in rendered page.
     assert "+8801712345678" not in r.text

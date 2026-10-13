@@ -6,6 +6,9 @@
     <p>{{ t("donor.manage.telegram.intro") }}</p>
     <p><a class="button" href="{{ telegram_bot_start_url }}">{{ t("donor.manage.telegram.open_button") }}</a></p>
     <p class="muted">{{ t("donor.manage.telegram.code_label") }} <code>{{ telegram_pending_code }}</code></p>
+  {% elif telegram_pending_code_live %}
+    <p>{{ t("donor.manage.telegram.intro") }}</p>
+    <p class="muted">{{ t("donor.manage.telegram.code_already_issued") }}</p>
   {% else %}
     <p class="muted">{{ t("donor.manage.telegram.no_bot") }}</p>
   {% endif %}

@@ -76,7 +76,7 @@ def _make_donor(
 def _make_request(engine, *, area_id: int) -> BloodRequest:
     with Session(engine) as session:
         r = BloodRequest(
-            public_token=new_token(24),
+            public_token_hash=hash_token(new_token(24)),
             blood_group="A+",
             units=1,
             hospital_name="H",

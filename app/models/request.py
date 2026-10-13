@@ -31,8 +31,12 @@ class BloodRequest(SQLModel, table=True):
     __tablename__ = "requests"
 
     id: int | None = Field(default=None, primary_key=True)
-    # Random public token used in tracking URLs (never expose the integer id).
-    public_token: str = Field(index=True, unique=True, max_length=64)
+    # SHA-256 hash of the random public token used in tracking URLs. We
+    # store the hash, not the plaintext, so a DB read does not reveal
+    # any active tracking URL (F11.1: secrets must be hashed at rest).
+    public_token_hash: str = Field(
+        index=True, unique=True, max_length=128
+    )
 
     blood_group: str = Field(index=True, max_length=4, min_length=2)
     units: int = Field(ge=1, le=10)

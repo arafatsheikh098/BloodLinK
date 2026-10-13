@@ -424,10 +424,11 @@ def test_record_donation_with_request_token_creates_contact_attempt(
     d = _make_donor(engine, name="Kim", phone="01712345682", area_id=areas["dhanmondi"])
     # Create a request to link.
     with Session(engine) as session:
-        from app.tokens import new_token
+        from app.tokens import hash_token, new_token
 
+        plain_token = new_token(24)
         req = BloodRequest(
-            public_token=new_token(24),
+            public_token_hash=hash_token(plain_token),
             blood_group="A+",
             units=1,
             hospital_name="H",
@@ -440,7 +441,7 @@ def test_record_donation_with_request_token_creates_contact_attempt(
         session.add(req)
         session.commit()
         session.refresh(req)
-        token = req.public_token
+        token = plain_token
     csrf = _get_donor_csrf(logged_in)
     r = logged_in.post(
         f"/coordinator/donors/{d.id}/record-donation",

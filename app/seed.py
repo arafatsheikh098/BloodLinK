@@ -87,7 +87,7 @@ def seed_demo(engine: Any = None) -> None:
         ).first()
         if not existing_req:
             r = BloodRequest(
-                public_token=new_token(24),
+                public_token_hash=hash_token(new_token(24)),
                 blood_group="A+",
                 units=2,
                 hospital_name="Demo Hospital",

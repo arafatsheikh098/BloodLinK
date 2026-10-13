@@ -15,6 +15,7 @@ from sqlmodel import Session, select
 from app.models.area import Area
 from app.models.request import BloodRequest, RequestStatus
 from app.models.request_attempt import RequestAttempt
+from app.tokens import hash_token
 
 
 @pytest.fixture
@@ -182,13 +183,13 @@ def test_phone_active_cap(app_client, area_id):
 
     from app.db import get_engine
     from app.phone import normalize_bd_mobile
-    from app.tokens import new_token
+    from app.tokens import hash_token, new_token
 
     phone = "01712345678"
     with Session(get_engine()) as session:
         for _ in range(3):
             req = BloodRequest(
-                public_token=new_token(24),
+                public_token_hash=hash_token(new_token(24)),
                 blood_group="A+",
                 units=1,
                 hospital_name="H",
@@ -272,7 +273,7 @@ def test_requester_can_cancel_pending_request(app_client, area_id):
     from app.db import get_engine
 
     with Session(get_engine()) as session:
-        req = session.exec(select(BloodRequest).where(BloodRequest.public_token == token)).first()
+        req = session.exec(select(BloodRequest).where(BloodRequest.public_token_hash == hash_token(token))).first()
     assert req.status == RequestStatus.CANCELLED.value
 
 
@@ -286,7 +287,7 @@ def test_cannot_cancel_after_fulfilled(app_client, area_id, engine):
     from app.db import get_engine
 
     with Session(get_engine()) as session:
-        req = session.exec(select(BloodRequest).where(BloodRequest.public_token == token)).first()
+        req = session.exec(select(BloodRequest).where(BloodRequest.public_token_hash == hash_token(token))).first()
         req.status = RequestStatus.FULFILLED.value
         session.add(req)
         session.commit()
@@ -301,5 +302,61 @@ def test_cannot_cancel_after_fulfilled(app_client, area_id, engine):
     # 303 redirect; the underlying status was already terminal
     assert r3.status_code == 303
     with Session(get_engine()) as session:
-        req = session.exec(select(BloodRequest).where(BloodRequest.public_token == token)).first()
+        req = session.exec(select(BloodRequest).where(BloodRequest.public_token_hash == hash_token(token))).first()
     assert req.status == RequestStatus.FULFILLED.value
+
+
+def test_public_token_is_stored_hashed_not_plaintext(app_client, area_id, engine):
+    """F11.1: secrets must be hashed at rest. The plaintext tracking token
+    must NOT appear in the requests table — only its SHA-256 hash.
+    """
+    r = app_client.post(
+        "/request/new",
+        data={
+            "blood_group": "A+",
+            "units": "1",
+            "hospital_name": "H",
+            "area_id": str(area_id),
+            "needed_by": (datetime.now(UTC) + timedelta(hours=6))
+            .replace(microsecond=0)
+            .isoformat(),
+            "requester_name": "Tester",
+            "requester_phone": "01712345678",
+            "note": "",
+            "consent_contact": "on",
+            "website": "",
+            "csrf_token": _get_csrf(app_client),
+        },
+    )
+    assert r.status_code == 200
+    # The plaintext token is in the success page exactly once.
+    plain_token = None
+    for line in r.text.splitlines():
+        if "/request/" in line and "/request/new" not in line:
+            # crude parse: take the part between /request/ and the next "
+            after = line.split("/request/", 1)[1]
+            plain_token = after.split('"', 1)[0].split(" ", 1)[0]
+            break
+    assert plain_token, "could not extract tracking link"
+    assert len(plain_token) > 8  # not the integer id
+
+    # But the DB row must store the hash, not the plaintext.
+    from sqlmodel import select as _select
+
+    with Session(engine) as session:
+        rows = list(
+            session.exec(
+                _select(BloodRequest).where(
+                    BloodRequest.public_token_hash == hash_token(plain_token)
+                )
+            ).all()
+        )
+        assert len(rows) == 1
+        # The plaintext must NOT be a column on the model at all.
+        assert not hasattr(rows[0], "public_token")
+    # Direct raw SELECT proves the column is not in the schema either.
+    with engine.connect() as conn:
+        from sqlalchemy import text
+        cols = [row[1] for row in conn.execute(text("PRAGMA table_info(requests)"))]
+    assert "public_token" not in cols
+    assert "public_token_hash" in cols

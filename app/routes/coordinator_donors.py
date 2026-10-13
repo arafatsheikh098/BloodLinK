@@ -365,7 +365,9 @@ def donor_record_donation(
     linked_request: BloodRequest | None = None
     if request_token.strip():
         linked_request = session.exec(
-            select(BloodRequest).where(BloodRequest.public_token == request_token.strip())
+            select(BloodRequest).where(
+                BloodRequest.public_token_hash == hash_token(request_token.strip())
+            )
         ).first()
         if linked_request is None:
             flash(request, "error", "Request token not found; donation recorded without a link.")
@@ -382,7 +384,10 @@ def donor_record_donation(
 
     detail_bits = [f"date={d.isoformat()}"]
     if linked_request is not None:
-        detail_bits.append(f"request_token={linked_request.public_token}")
+        # Don't write the public token to audit detail (F11.1: audit log
+        # must not contain PII / secrets; the request_id column above
+        # already records which request was linked).
+        detail_bits.append("request_linked")
     if note.strip():
         detail_bits.append("note_set")
     write_audit(

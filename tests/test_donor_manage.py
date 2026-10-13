@@ -4,6 +4,7 @@ from __future__ import annotations
 import pytest
 from sqlmodel import Session, select
 
+from app.config import get_settings
 from app.models.area import Area
 from app.models.audit_log import AuditLog
 from app.models.donor import Donor, DonorStatus
@@ -221,3 +222,57 @@ def test_manage_regenerate_link_old_stops_working(app_client, engine, setup):
     # New token works
     r2 = app_client.get(f"/donor/manage/{new_plain}")
     assert r2.status_code == 200
+
+
+def test_manage_does_not_rotate_telegram_pending_code(
+    app_client, engine, setup, monkeypatch
+):
+    """The 15-minute TTL on the Telegram link code must NOT slide on every
+    page load: if a live, unexpired code already exists, we should reuse it
+    (i.e. NOT overwrite pending_code_hash). Otherwise a parallel tab clicking
+    the bot would race with a new code being generated here.
+    """
+    from datetime import UTC, datetime, timedelta
+
+    from app.models.telegram_link import TelegramLink
+    from app.tokens import hash_token
+
+    monkeypatch.setenv("TELEGRAM_BOT_TOKEN", "test-bot-token")
+    monkeypatch.setenv("TELEGRAM_BOT_USERNAME", "testbot")
+    get_settings.cache_clear()
+
+    token, _area1, _ = setup
+    # Find the donor and seed a fresh, unexpired pending code.
+    with Session(engine) as session:
+        donor = session.exec(select(Donor)).first()
+        assert donor is not None
+        donor_id = donor.id
+        original_hash = hash_token("ORIGINAL-CODE-123")
+        link = TelegramLink(
+            donor_id=donor_id,
+            pending_code_hash=original_hash,
+            pending_code_expires_at=datetime.now(UTC) + timedelta(minutes=10),
+        )
+        session.add(link)
+        session.commit()
+
+    # First page load: must NOT rotate (live code exists).
+    r1 = app_client.get(f"/donor/manage/{token}")
+    assert r1.status_code == 200
+    with Session(engine) as session:
+        link1 = session.exec(
+            select(TelegramLink).where(TelegramLink.donor_id == donor_id)
+        ).first()
+        assert link1 is not None
+        assert link1.pending_code_hash == original_hash  # unchanged
+
+    # Second page load: still must NOT rotate.
+    r2 = app_client.get(f"/donor/manage/{token}")
+    assert r2.status_code == 200
+    with Session(engine) as session:
+        link2 = session.exec(
+            select(TelegramLink).where(TelegramLink.donor_id == donor_id)
+        ).first()
+        assert link2.pending_code_hash == original_hash
+        # expires_at should also be the original, not refreshed
+        assert link2.pending_code_expires_at == link1.pending_code_expires_at

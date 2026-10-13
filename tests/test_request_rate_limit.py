@@ -20,7 +20,7 @@ from app.rate_limit import (
     recent_ip_count,
     record_attempt,
 )
-from app.tokens import new_token
+from app.tokens import hash_token, new_token
 
 
 @pytest.fixture
@@ -92,7 +92,7 @@ def test_active_requests_for_phone_counts_only_active(engine, area_id):
         for _ in range(2):
             session.add(
                 BloodRequest(
-                    public_token=new_token(24),
+                    public_token_hash=hash_token(new_token(24)),
                     blood_group="A+",
                     units=1,
                     hospital_name="H",
@@ -105,7 +105,7 @@ def test_active_requests_for_phone_counts_only_active(engine, area_id):
             )
         session.add(
             BloodRequest(
-                public_token=new_token(24),
+                public_token_hash=hash_token(new_token(24)),
                 blood_group="A+",
                 units=1,
                 hospital_name="H",
@@ -129,7 +129,7 @@ def test_phone_has_room_blocks_at_cap(engine, area_id):
         for _ in range(PHONE_MAX_ACTIVE):
             session.add(
                 BloodRequest(
-                    public_token=new_token(24),
+                    public_token_hash=hash_token(new_token(24)),
                     blood_group="A+",
                     units=1,
                     hospital_name="H",

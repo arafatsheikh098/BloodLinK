@@ -12,7 +12,7 @@ from app.models.area import Area
 from app.models.audit_log import AuditAction
 from app.models.request import BloodRequest, RequestStatus
 from app.purge import purge_old_requests
-from app.tokens import new_token
+from app.tokens import hash_token, new_token
 
 
 @pytest.fixture
@@ -38,7 +38,7 @@ def _make_request(
     nb = needed_by or (datetime.now(UTC) + timedelta(hours=6))
     with Session(engine) as session:
         r = BloodRequest(
-            public_token=new_token(24),
+            public_token_hash=hash_token(new_token(24)),
             blood_group="A+",
             units=1,
             hospital_name="H",

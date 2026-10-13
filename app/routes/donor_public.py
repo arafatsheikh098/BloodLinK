@@ -167,7 +167,7 @@ def register_submit(
     session.flush()
     write_audit(
         session,
-        "donor_register",
+        AuditAction.DONOR_REGISTER,
         actor_kind="anonymous",
         donor_id=donor.id,
     )
@@ -204,6 +204,7 @@ def manage_form(
     bot_username = None
     pending_code = None
     bot_start_url = None
+    has_live_code = False
     if get_settings().telegram_enabled:
         from app.routes.telegram import _new_link_code
 
@@ -212,30 +213,36 @@ def manage_form(
             # Already linked
             pending_code = None
         else:
-            # Issue a fresh pending code (or reuse the live one)
-            if (
+            # Only rotate the pending code if there is no live one, or the
+            # existing one has expired. Otherwise the 15-minute TTL would
+            # silently slide on every page load, and a parallel tab clicking
+            # the bot would race with a new code being generated here.
+            now_naive = datetime.now(UTC).replace(tzinfo=None)
+            existing_expires = (
+                telegram_link.pending_code_expires_at.replace(tzinfo=None)
+                if telegram_link and telegram_link.pending_code_expires_at
+                else None
+            )
+            has_live_code = bool(
                 telegram_link
                 and telegram_link.pending_code_hash
-                and telegram_link.pending_code_expires_at
-                and telegram_link.pending_code_expires_at.replace(tzinfo=None)
-                > datetime.now(UTC).replace(tzinfo=None)
-            ):
-                # We cannot show the plaintext old code (we only have its hash)
-                # so generate a fresh one.
-                pass
-            if telegram_link is None:
-                telegram_link = TelegramLink(donor_id=donor.id)
-                session.add(telegram_link)
-            plain_code = _new_link_code()
-            telegram_link.pending_code_hash = hash_token(plain_code)
-            telegram_link.pending_code_expires_at = (
-                datetime.now(UTC) + timedelta(minutes=15)
+                and existing_expires
+                and existing_expires > now_naive
             )
-            telegram_link.updated_at = datetime.now(UTC)
-            session.commit()
-            pending_code = plain_code
-            if bot_username:
-                bot_start_url = f"https://t.me/{bot_username}?start={plain_code}"
+            if not has_live_code:
+                if telegram_link is None:
+                    telegram_link = TelegramLink(donor_id=donor.id)
+                    session.add(telegram_link)
+                plain_code = _new_link_code()
+                telegram_link.pending_code_hash = hash_token(plain_code)
+                telegram_link.pending_code_expires_at = (
+                    datetime.now(UTC) + timedelta(minutes=15)
+                )
+                telegram_link.updated_at = datetime.now(UTC)
+                session.commit()
+                pending_code = plain_code
+                if bot_username:
+                    bot_start_url = f"https://t.me/{bot_username}?start={plain_code}"
     return templates.TemplateResponse(
         request,
         "donor/manage.html",
@@ -254,6 +261,11 @@ def manage_form(
             "telegram_pending_code": pending_code,
             "telegram_bot_username": bot_username,
             "telegram_bot_start_url": bot_start_url,
+            # A live, unexpired code exists but we did NOT rotate (TTL is
+            # held steady). Template should show "code already issued" hint.
+            "telegram_pending_code_live": (
+                has_live_code and pending_code is None
+            ),
         },
     )
 

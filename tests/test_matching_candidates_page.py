@@ -114,7 +114,7 @@ def _make_request(
     nb = needed_by or (datetime.now(UTC) + timedelta(hours=6))
     with Session(engine) as session:
         req = BloodRequest(
-            public_token=new_token(24),
+            public_token_hash=hash_token(new_token(24)),
             blood_group=blood_group,
             units=2,
             hospital_name="H",

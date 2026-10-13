@@ -38,7 +38,7 @@ from app.request_validation import (
     validate_request_form,
 )
 from app.templates import make_templates, render_lang_from_request
-from app.tokens import new_token
+from app.tokens import hash_token, new_token
 
 router = APIRouter()
 templates = make_templates()
@@ -284,10 +284,12 @@ def request_new_submit(
             status_code=400,
         )
 
-    # Generate the tracking token (F5.5, F5.6).
+    # Generate the tracking token (F5.5, F5.6). Only the hash is persisted
+    # (F11.1: secrets must be hashed at rest); the plaintext is shown to
+    # the requester ONCE in the response so they can save the URL.
     plain = new_token(24)
     req = BloodRequest(
-        public_token=plain,
+        public_token_hash=hash_token(plain),
         blood_group=cleaned["blood_group"],
         units=cleaned["units"],
         hospital_name=cleaned["hospital_name"],
@@ -312,7 +314,7 @@ def request_new_submit(
     )
     write_audit(
         session,
-        "request_create",
+        AuditAction.REQUEST_CREATE,
         actor_kind="anonymous",
         request_id=req.id,
     )
@@ -340,7 +342,9 @@ def request_track(
     session: Annotated[Session, Depends(get_session)],
 ) -> HTMLResponse:
     req = session.exec(
-        select(BloodRequest).where(BloodRequest.public_token == token)
+        select(BloodRequest).where(
+            BloodRequest.public_token_hash == hash_token(token)
+        )
     ).first()
     if not req:
         # F6.4: no info leak. Same page, generic message.
@@ -364,6 +368,11 @@ def request_track(
             "csrf_token": get_or_create_csrf(request),
             "not_found": False,
             "req": req,
+            # The plaintext token is only available in the URL the requester
+            # is currently holding. We pass it through so the cancel form
+            # can POST to /request/{token} again, but it is never persisted
+            # in the DB (only the SHA-256 hash is).
+            "public_token": token,
             "effective": effective_status(req.status, req.needed_by),
             "flashes": pop_flashes(request),
         },
@@ -377,7 +386,9 @@ def request_cancel(
     session: Annotated[Session, Depends(get_session)],
 ) -> RedirectResponse:
     req = session.exec(
-        select(BloodRequest).where(BloodRequest.public_token == token)
+        select(BloodRequest).where(
+            BloodRequest.public_token_hash == hash_token(token)
+        )
     ).first()
     if not req:
         raise HTTPException(status_code=404, detail="not found")

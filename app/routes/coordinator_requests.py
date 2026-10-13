@@ -29,6 +29,7 @@ from app.models.donor import BLOOD_GROUPS
 from app.models.request import BloodRequest, RequestStatus
 from app.request_validation import effective_status
 from app.templates import make_templates, render_lang_from_request
+from app.tokens import hash_token
 
 router = APIRouter(prefix="/coordinator/requests")
 templates = make_templates()
@@ -58,11 +59,21 @@ def requests_list(
     if q:
         like = f"%{q.strip()}%"
         digits = "".join(c for c in q if c.isdigit())
-        clauses = [
-            BloodRequest.public_token.ilike(like),
+        # The public token is stored as a SHA-256 hash, so we cannot
+        # substring-match it. If the user pastes what looks like a token,
+        # we hash it and look for an exact match. Otherwise we fall back to
+        # the other searchable fields.
+        clauses: list = [
             BloodRequest.hospital_name.ilike(like),
             BloodRequest.requester_name.ilike(like),
         ]
+        token_guess = q.strip()
+        if token_guess and all(c in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-." for c in token_guess):
+            # best-effort: if the search string is a possible token, also
+            # try hashing it. Use OR so unrelated searches still work.
+            clauses.append(
+                BloodRequest.public_token_hash == hash_token(token_guess)
+            )
         if digits:
             clauses.append(BloodRequest.requester_phone_normalized.contains(digits))
         clause = or_(*clauses)

@@ -193,6 +193,7 @@
   "donor.manage.telegram.title": "Telegram notifications (optional)",
   "donor.manage.telegram.intro": "Open this link in Telegram to link your account. The code expires in 15 minutes and can be used only once.",
   "donor.manage.telegram.code_label": "Your one-time code:",
+  "donor.manage.telegram.code_already_issued": "A one-time code has already been sent for your account. Open the link in Telegram from the message you received — the code expires in 15 minutes.",
   "donor.manage.telegram.open_button": "Open in Telegram",
   "donor.manage.telegram.no_bot": "Telegram is not configured for this deployment.",
   "donor.manage.telegram.linked": "Your Telegram account is linked.",
