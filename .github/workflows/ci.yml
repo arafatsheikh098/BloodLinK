@@ -55,9 +55,10 @@ jobs:
             "hypothesis==6.128.2" \
             "ruff==0.8.3" \
             "anyio==4.7.0"
+          pip install -e .
       - name: Lint
         run: ruff check app tests
       - name: Test (SQLite default + Postgres)
         run: |
-          pytest -q
+          DATABASE_URL="" pytest -q
           DATABASE_URL=$DATABASE_URL SECRET_KEY=$SECRET_KEY pytest -q

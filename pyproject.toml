@@ -37,6 +37,7 @@ build-backend = "setuptools.build_meta"
 include = ["app*"]
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 testpaths = ["tests"]
 addopts = "-q"
 filterwarnings = [

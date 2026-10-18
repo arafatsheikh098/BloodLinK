@@ -68,7 +68,7 @@ def downgrade() -> None:
         batch_op.drop_index("ix_requests_public_token_hash")
         batch_op.drop_column("public_token_hash")
         batch_op.add_column(
-            sa.Column("public_token", sa.String(length=64), nullable=False)
+            sa.Column("public_token", sa.String(length=64), nullable=True)
         )
         batch_op.create_index(
             "ix_requests_public_token", ["public_token"], unique=True
