@@ -44,6 +44,7 @@
 <p class="muted">{{ total }} total — page {{ page }} / {{ total_pages }}</p>
 
 {% if requests %}
+<div class="table-wrap">
 <table>
   <tr>
     <th>{{ t("coordinator.requests.col.blood") }}</th>
@@ -56,20 +57,22 @@
   </tr>
   {% for r in requests %}
     <tr>
-      <td>{{ r.blood_group }}</td>
-      <td>{{ r.units }}</td>
+      <td><span class="badge badge-blood">{{ r.blood_group }}</span></td>
+      <td><strong>{{ r.units }}</strong></td>
       <td>{{ r.hospital_name }}</td>
       <td>
         {% for a in areas %}
           {% if a.id == r.area_id %}{{ a.name }}{% endif %}
         {% endfor %}
       </td>
-      <td>{{ r.needed_by.isoformat() }}</td>
-      <td>{{ t("request.status." ~ effective_status(r.status, r.needed_by)) }}</td>
-      <td><a href="/coordinator/requests/{{ r.id }}">{{ t("coordinator.requests.view") }}</a></td>
+      <td><code>{{ r.needed_by.strftime("%Y-%m-%d %H:%M") if r.needed_by else "—" }}</code></td>
+      {% set eff_st = effective_status(r.status, r.needed_by) %}
+      <td><span class="badge badge-{{ 'urgent' if eff_st == 'urgent' else ('verified' if eff_st == 'fulfilled' else 'unverified') }}">{{ t("request.status." ~ eff_st) }}</span></td>
+      <td><a class="button button-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.84rem;" href="/coordinator/requests/{{ r.id }}">{{ t("coordinator.requests.view") }}</a></td>
     </tr>
   {% endfor %}
 </table>
+</div>
 {% if total_pages > 1 %}
 <nav class="pagination">
   {% if page > 1 %}

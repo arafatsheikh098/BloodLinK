@@ -6,11 +6,12 @@
 <p class="muted">{{ t("stats.total", n=stats.total) }}</p>
 
 {% if stats.rows %}
+<div class="table-wrap">
 <table>
   <tr>
     <th>{{ t("stats.col.area") }}</th>
     {% for g in stats.columns %}
-      <th>{{ g }}</th>
+      <th><span class="badge badge-blood">{{ g }}</span></th>
     {% endfor %}
   </tr>
   {% for area_name in stats.rows %}
@@ -21,13 +22,14 @@
         <td>
           {% if c is none %}—
           {% elif c.suppressed %}<span class="muted">{{ t("stats.fewer_than", n=stats.threshold) }}</span>
-          {% else %}{{ c.count }}
+          {% else %}<strong>{{ c.count }}</strong>
           {% endif %}
         </td>
       {% endfor %}
     </tr>
   {% endfor %}
 </table>
+</div>
 {% else %}
   <p class="muted">{{ t("stats.empty") }}</p>
 {% endif %}

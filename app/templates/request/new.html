@@ -10,7 +10,7 @@
   <div class="flash flash-error">{{ t("request.new.phone_too_many") }}</div>
 {% endif %}
 
-<form method="post" action="/request/new">
+<form method="post" action="/request/new" class="card form-card">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
   {# Honeypot field (F5.2) — must be hidden from sighted users and ATs #}

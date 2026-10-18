@@ -6,7 +6,7 @@
 {% elif error == "invalid" %}
   <div class="flash flash-error">{{ t("auth.login.error") }}</div>
 {% endif %}
-<form method="post" action="/login">
+<form method="post" action="/login" class="card form-card">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
   <label for="username">{{ t("auth.login.username") }}</label>
   <input id="username" name="username" type="text" autocomplete="username" required>

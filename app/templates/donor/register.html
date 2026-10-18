@@ -3,7 +3,7 @@
 <h1>{{ t("donor.register.title") }}</h1>
 <p class="muted">{{ t("donor.register.intro") }}</p>
 
-<form method="post" action="/donor/register">
+<form method="post" action="/donor/register" class="card form-card">
   <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
   <label for="name">{{ t("donor.register.name") }}</label>

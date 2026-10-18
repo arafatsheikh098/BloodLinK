@@ -52,6 +52,7 @@
 <p class="muted">{{ t("coordinator.donors.page_of", n=page, total=total_pages) }} — {{ total }} total</p>
 
 {% if donors %}
+<div class="table-wrap">
 <table class="donor-list">
   <tr>
     <th>{{ t("coordinator.donors.col.name") }}</th>
@@ -64,22 +65,23 @@
   </tr>
   {% for d in donors %}
     <tr>
-      <td>{{ d.name }}</td>
-      <td>{{ d.blood_group }}</td>
+      <td><strong>{{ d.name }}</strong></td>
+      <td><span class="badge badge-blood">{{ d.blood_group }}</span></td>
       <td>
         {% for a in areas %}
           {% if a.id == d.area_id %}{{ a.name }}{% endif %}
         {% endfor %}
       </td>
-      <td>{{ mask_phone(d.phone_normalized) }}</td>
-      <td>{{ t("coordinator.donors.status_" ~ d.status) }}</td>
+      <td><code>{{ mask_phone(d.phone_normalized) }}</code></td>
+      <td><span class="badge badge-{{ d.status }}">{{ t("coordinator.donors.status_" ~ d.status) }}</span></td>
       <td>{{ d.last_donation_date.isoformat() if d.last_donation_date else "—" }}</td>
       <td>
-        <a href="/coordinator/donors/{{ d.id }}">{{ t("coordinator.donors.view") }}</a>
+        <a class="button button-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.84rem;" href="/coordinator/donors/{{ d.id }}">{{ t("coordinator.donors.view") }}</a>
       </td>
     </tr>
   {% endfor %}
 </table>
+</div>
 
 {% if total_pages > 1 %}
 <nav class="pagination">
