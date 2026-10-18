@@ -24,7 +24,6 @@ jobs:
           --health-timeout 5s
           --health-retries 10
     env:
-      DATABASE_URL: postgresql+psycopg://bloodlink:bloodlink@localhost:5432/bloodlink
       SECRET_KEY: test-secret-key-not-for-production-use-only-ci
       ENV: test
     steps:
@@ -58,7 +57,9 @@ jobs:
           pip install -e .
       - name: Lint
         run: ruff check app tests
-      - name: Test (SQLite default + Postgres)
-        run: |
-          DATABASE_URL="" pytest -q
-          DATABASE_URL=$DATABASE_URL SECRET_KEY=$SECRET_KEY pytest -q
+      - name: Test (SQLite default)
+        run: pytest -q
+      - name: Test (Postgres migrations)
+        env:
+          DATABASE_URL: postgresql+psycopg://bloodlink:bloodlink@localhost:5432/bloodlink
+        run: pytest tests/test_migrations_postgres.py -q

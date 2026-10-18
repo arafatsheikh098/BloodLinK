@@ -15,6 +15,7 @@ from sqlalchemy import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 # Configure env BEFORE importing the app.
+os.environ.setdefault("DATABASE_URL", "sqlite:///./test.db")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-not-for-production-use-only-ci")
 os.environ.setdefault("ENV", "test")
 os.environ.setdefault("DEMO_MODE", "false")
